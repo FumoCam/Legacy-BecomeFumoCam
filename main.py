@@ -18,7 +18,7 @@ import pydirectinput  # pip3.9 install pydirectinput
 # pip3.9 install pygetwindow (allows additional functionality in pyautogui)
 import requests  # pip3.9 install requests
 
-screen_res = {
+screen_res = {  # todo: Don't use globals, make class-based
     "width": pyautogui.size()[0],
     "height": pyautogui.size()[1],
     "x_multi": pyautogui.size()[0] / 2560,
@@ -27,6 +27,7 @@ screen_res = {
 
 monitor_size = mss().monitors[0]
 import globals  # globals.py
+import spawn_detection
 
 output_log = globals.output_log
 
@@ -53,8 +54,14 @@ def take_screenshot():
     return file_name
 
 
-def kill_process(executable="RobloxPlayerBeta.exe"):
-    subprocess.call(["taskkill", "/IM", executable])
+def kill_process(executable="RobloxPlayerBeta.exe", force=False):
+    # todo: taskkill.exe can fail, how can we kill the thing that should kill? https://i.imgur.com/jd01ZOv.png
+    process_call = ["taskkill"]
+    if force:
+        process_call.append("/F")
+    process_call.append("/IM")
+    process_call.append(executable)
+    subprocess.call(process_call)
 
 
 def force_get_best_server():
@@ -68,7 +75,7 @@ def force_get_best_server():
     return found_best_server["id"]
 
 
-def twitch_main():
+def twitch_main():   # todo: Move to seperate file
     username = globals.Twitch.username
     client_id = os.getenv("TWITCH_CLIENT_ID")
     token = os.getenv("TWITCH_MAIN_OAUTH")
@@ -87,7 +94,7 @@ def handle_join_new_server(crash=False):
     log(action)
     cfg = globals.Roblox
     cfg.next_possible_teleport = 0
-    kill_process()
+    kill_process(force=True)
     server_id = force_get_best_server()
     sleep(1)
 
@@ -97,6 +104,9 @@ def handle_join_new_server(crash=False):
 
     log_process(f"{process_name} - Handling Spawn")
     server_spawn()
+
+    log_process(f"{process_name} - Detecting Location")
+    spawn_detection.main()
 
     log_process(f"{process_name} - Hooking into Roblox")
     log("Establishing process connection...")
@@ -113,59 +123,80 @@ def handle_join_new_server(crash=False):
     log("")
 
 
+def do_crash_check():
+    crashed = False
+    for window in pyautogui.getAllWindows():
+        if window.title == "Crash" or window.title == "Roblox Crash" or window.title == "Crashed":    
+            crashed = True
+            window.close()
+    if crashed:
+        notify_admin("Roblox Crash")
+        globals.Roblox.action_queue.append("handle_crash")
+    return crashed
+
+
 def crash_check_loop():
     while True:
-        for window_title in pyautogui.getAllTitles():
-            if window_title == "Crash" or window_title == "Roblox Crash":
-                notify_admin("Roblox Crash")
-                globals.Roblox.action_queue.append("handle_crash")
-                sleep(60)
+        crashed = do_crash_check()
+        if crashed:
+            globals.Roblox.action_queue.append("handle_crash")
+            sleep(60)
         sleep(5)
 
 
-def check_active(title="Roblox"):
+def check_active(title="Roblox", title_ending=None):
+    print("check")
     active_window = pyautogui.getActiveWindow()
-    if active_window is not None and active_window.title == title:
-        return
+    if active_window is not None:
+        title_active = title_ending is None and active_window.title == title
+        title_ending_active = title_ending is not None and active_window.title.endswith(title_ending)
+        if title_active or title_ending_active:
+            print(f"{active_window.title} already active")
+            return
     for window in pyautogui.getAllWindows():
-        if window.title == title:
+        title_active = title_ending is None and window.title == title
+        title_ending_active = title_ending is not None and window.title.endswith(title_ending)
+        if title_active or title_ending_active:
             try:
-                print(f"Minimizing {title}")
                 window.minimize()
+                print(f"Minimized {window.title}")
             except Exception:
-                print(f"ERROR IN MINIMIZING {title}")
+                print(f"ERROR IN MINIMIZING {window.title}")
             try:
-                print(f"Focusing {title}")
                 window.focus()
+                print(f"Focused {window.title}")
             except Exception:
-                print(f"ERROR IN FOCUSING {title}")
+                print(f"ERROR IN FOCUSING {window.title}")
             try:
-                print(f"Activating {title}")
                 window.activate()
+                print(f"Activated {window.title}")
             except Exception:
-                print(f"ERROR IN ACTIVATING {title}")
+                print(f"ERROR IN ACTIVATING {window.title}")
             try:
-                print(f"Maximizing {title}")
                 window.maximize()
+                print(f"Maximized {window.title}")
             except Exception:
-                print(f"ERROR IN MAXIMIZING {title}")
+                print(f"ERROR IN MAXIMIZING {window.title}")
             sleep(0.3)
-            if title == "Roblox" and window.height != pyautogui.size()[1]:
+            if title_ending is not None:
+                check_active(title_ending=title_ending)
+                print("Recurse")
+            elif title == "Roblox" and window.height != pyautogui.size()[1]:
                 while window.height != pyautogui.size()[1]:
                     pydirectinput.press("f11")
                     print("Maximizing window with F11")
                     sleep(0.3)
-            check_active(title)
+                check_active(title)
 
 
 def send_chat(message):
     check_active()
     pyautogui.press('/')
     sleep(0.1)
-    for word in globals.Roblox.censored_words:
+    for word in globals.Roblox.censored_words:  # todo: More effective censoring
         if word in message:
             message = message.replace(word, "*" * len(word))
-    pyautogui.write(message)
+    pyautogui.write(message)  # todo: investigate long messages only partially coming through
     sleep(0.5)
     pydirectinput.press('enter')
 
@@ -212,13 +243,84 @@ def rel_coord(x, y):
     return round(x * screen_res["x_multi"]), round(y * screen_res["y_multi"])
 
 
-def spawn_wait_until_loaded():
+def toggle_collisions():
     global screen_res
     check_active()
-    sleep(1)
-    character_select_button = None
-    while character_select_button is None:  # Loading
-        log("Loading into Roblox")
+    log("Opening Settings")
+    sleep(0.5)
+    winsound.Beep(150, 100)
+    button_x, button_y = round(screen_res["width"] * 0.5), round(screen_res["height"] * 0.95)  # Settings button
+    pydirectinput.moveTo(button_x, button_y)
+    alt_tab_click()
+    winsound.Beep(100, 50)
+
+    log("Toggling Collisions")
+    sleep(0.5)
+    winsound.Beep(150, 100)
+    button_x, button_y = round(screen_res["width"] * 0.5), round(
+        screen_res["height"] * 0.40)  # Toggle Collisions button
+    pydirectinput.moveTo(button_x, button_y)
+    alt_tab_click()
+    winsound.Beep(100, 50)
+
+    log("Closing Settings")
+    sleep(0.25)
+    winsound.Beep(150, 100)
+    button_x, button_y = round(screen_res["width"] * 0.5), round(
+        screen_res["height"] * 0.30)  # Toggle Collisions button
+    pydirectinput.moveTo(button_x, button_y)
+    alt_tab_click()
+    sleep(0.25)
+    winsound.Beep(100, 50)
+
+
+def alt_tab_click(click_mouse=True): 
+    """
+    Even pydirectinput cant click normally.
+    This is a work-around that actually clicks in the area the cursor was moved.
+    """
+    alt_tab_duration = 0.3
+    pyautogui.hotkey('alt', 'tab')
+    sleep(alt_tab_duration)
+    pyautogui.hotkey('alt', 'tab')
+    sleep(alt_tab_duration)
+    if click_mouse:
+        pydirectinput.mouseDown()
+        pydirectinput.mouseUp()
+
+
+def click_character_select_button():
+    sleep(0.5)
+    winsound.Beep(150, 100)
+    button_x, button_y = get_character_select_button_pos()
+    pydirectinput.moveTo(button_x, button_y)
+    alt_tab_click()
+    winsound.Beep(100, 50)
+
+
+def click_character_in_menu(click_mouse=True):
+    log("Scrolling to bottom of list")
+    for i in range(18):
+        pyautogui.scroll(-1)
+        winsound.Beep(40, 25)
+        sleep(0.05)
+    log(f"Scrolling up {globals.Roblox.character_select_scroll_up_amount} times")
+    for i in range(globals.Roblox.character_select_scroll_up_amount):
+        pyautogui.scroll(1)
+        winsound.Beep(40, 25)
+        sleep(0.05)
+    log("Clicking Momiji")
+    winsound.Beep(250, 100)
+    button_x, button_y = round(pyautogui.size()[0] * 0.5), round(
+        screen_res["height"] * globals.Roblox.character_select_screen_height_to_click)  # Toggle Collisions button
+    pydirectinput.moveTo(button_x, button_y)
+    alt_tab_click(click_mouse=click_mouse)
+    winsound.Beep(100, 50)
+    sleep(0.5)
+
+
+def get_character_select_button_pos():
+    while True:
         winsound.Beep(40, 50)
         try:
             print("TryingToFind")
@@ -228,154 +330,35 @@ def spawn_wait_until_loaded():
         except pyautogui.ImageNotFoundException:
             character_select_button = None
         if character_select_button is not None:
+            character_select_button = pyautogui.center(character_select_button)
             break
         sleep(1)
     return character_select_button
 
 
-def toggle_collisions():
-    global screen_res
+def change_characters():
     check_active()
-    log("Opening Settings")
-    sleep(0.5)
-    winsound.Beep(150, 100)
-    button_x, button_y = round(screen_res["width"] * 0.5), round(screen_res["height"] * 0.95)  # Settings button
-    pydirectinput.moveTo(button_x, button_y)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pydirectinput.mouseDown()
-    pydirectinput.mouseUp()
-    winsound.Beep(100, 50)
-
-    log("Toggling Collisions")
-    sleep(0.5)
-    winsound.Beep(150, 100)
-    button_x, button_y = round(screen_res["width"] * 0.5), round(
-        screen_res["height"] * 0.40)  # Toggle Collisions button
-    pydirectinput.moveTo(button_x, button_y)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pydirectinput.mouseDown()
-    pydirectinput.mouseUp()
-    winsound.Beep(100, 50)
-
-    log("Closing Settings")
-    sleep(0.25)
-    winsound.Beep(150, 100)
-    button_x, button_y = round(screen_res["width"] * 0.5), round(
-        screen_res["height"] * 0.30)  # Toggle Collisions button
-    pydirectinput.moveTo(button_x, button_y)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pydirectinput.mouseDown()
-    pydirectinput.mouseUp()
-    sleep(0.25)
-    winsound.Beep(100, 50)
-
-
-def change_characters(character_select_button):
-    global screen_res
-    check_active()
-    log("Opening Character Select")
-    sleep(0.5)
-    winsound.Beep(150, 100)
-    button_x, button_y = pyautogui.center(character_select_button)
-    pydirectinput.moveTo(button_x, button_y)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pydirectinput.mouseDown()
-    pydirectinput.mouseUp()
-    winsound.Beep(100, 50)
-    winsound.Beep(40, 25)
-    winsound.Beep(40, 25)
-    winsound.Beep(40, 25)
-    for i in range(18):
-        pyautogui.scroll(-1)
-        winsound.Beep(40, 25)
-        sleep(0.05)
-    log("Scrolling up 10 times")
-    for i in range(10):
-        pyautogui.scroll(1)
-        winsound.Beep(40, 25)
-        sleep(0.05)
-
-    # button_x, button_y = 
-    # pydirectinput.moveTo(button_x, button_y)
-    # reisen_location = None
-    # while reisen_location == None:
-    # try:
-    # log("Trying to find character")
-    # pyautogui.scroll(1)
-    # reisen_location = pyautogui.locateOnScreen('reisen.png', grayscale=True, confidence=0.6)
-    # except pyautogui.ImageNotFoundException:
-    # reisen_location = None
-    # if reisen_location != None:
-    # winsound.Beep(200,75)
-    # break
-    # winsound.Beep(40,75)
-    # sleep(0.1)
-    log("Clicking Momiji")
-    winsound.Beep(250, 100)
-    button_x, button_y = round(screen_res["width"] * 0.5), round(
-        screen_res["height"] * 0.48)  # Toggle Collisions button
-    pydirectinput.moveTo(button_x, button_y)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pydirectinput.mouseDown()
-    pydirectinput.mouseUp()
-    winsound.Beep(100, 50)
-    sleep(0.5)
-    new_character_select_button = None
-
-    log("Trying to close character select")
-    while new_character_select_button is None:
-        try:
-            print("TryingToFind")
-            new_character_select_button = pyautogui.locateOnScreen(globals.Roblox.character_select_image_path,
-                                                                   grayscale=True,
-                                                                   confidence=0.9)  # , #region=character_select_range)
-        except pyautogui.ImageNotFoundException:
-            new_character_select_button = None
-        if new_character_select_button is not None:
-            new_x, new_y = pyautogui.center(new_character_select_button)
-            if new_y != button_y:
-                winsound.Beep(150, 100)
-                pydirectinput.moveTo(new_x, new_y)
-                pyautogui.hotkey('alt', 'tab')
-                sleep(0.15)
-                pyautogui.hotkey('alt', 'tab')
-                sleep(0.15)
-                pydirectinput.mouseDown()
-                pydirectinput.mouseUp()
-                winsound.Beep(100, 50)
-                break
-        sleep(1)
+    sleep(1)
+    log("Opening character select")
+    click_character_select_button()
+    click_character_in_menu()
+    log("Closing character select")
+    click_character_select_button()
 
 
 def server_spawn():
-    character_select_button = spawn_wait_until_loaded()
     sleep(5)
-    toggle_collisions()
-    change_characters(character_select_button)
+    if globals.Roblox.disable_collisions_on_spawn:
+        toggle_collisions()
+    change_characters()
     pydirectinput.moveTo(1, 1)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
-    pyautogui.hotkey('alt', 'tab')
-    sleep(0.15)
+    alt_tab_click()
 
 
 def run_javascript_in_browser(url, js_code, esc_before_entering):
+    # todo: Move to selenium once I figure out how generate and use cookies in a reproducible+easy way
     executable_name = "chrome.exe"
+    kill_process(executable_name, force=True)
     browser_path = os.path.join("C:\\", "Program Files (x86)", "Google", "Chrome", "Application", executable_name)
     if not os.path.exists(browser_path):
         browser_path = os.path.join("C:\\", "Program Files", "Google", "Chrome", "Application", executable_name)
@@ -385,7 +368,9 @@ def run_javascript_in_browser(url, js_code, esc_before_entering):
     winsound.Beep(40, 25)
     log("Launched. Loading (8s)...")
     subprocess.Popen(args)
-    sleep(8)
+    sleep(7)
+    check_active(title_ending="Google Chrome")
+    sleep(2)
     log("Closing dialogues (if present)...")
     winsound.Beep(50, 20)
     pyautogui.press("esc")
@@ -430,7 +415,7 @@ def get_best_server():
         servers = response_result["data"]
         for server in servers:
             print(server)
-            if server["playing"] > highest_playercount_server["playing"]:
+            if "playing" in server and server["playing"] > highest_playercount_server["playing"]:
                 highest_playercount_server = server
     if highest_playercount_server == server_obj:
         return False
@@ -453,18 +438,21 @@ def log_process(process, no_log=False):
     sleep(0.1)
 
 
-def check_if_should_change_servers(current_server_id="ERROR"):
+def check_if_should_change_servers(current_server_id="N/A"):
     original_current_server_id = current_server_id
     log("Querying Roblox API for server list")
     url = f"https://games.roblox.com/v1/games/{globals.Roblox.game_id}/servers/Public?sortOrder=Asc&limit=10"
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except Exception:
+        return False, f"[WARN] Could not poll Roblox servers. Is Roblox down?"
     if response.status_code == 200:
         log("Finding best server and comparing to current...")
 
         response_result = response.json()
         servers = response_result["data"]
         highest_player_server = {"id": "", "maxPlayers": 100, "playing": 0, "fps": 59, "ping": 100}
-        if current_server_id == "ERROR":
+        if current_server_id == "N/A":
             current_server = {"id": "", "maxPlayers": 100, "playing": 0, "fps": 59, "ping": 100}
         else:
             current_server = {"id": current_server_id, "maxPlayers": 100, "playing": 0, "fps": 59, "ping": 100}
@@ -489,33 +477,38 @@ def check_if_should_change_servers(current_server_id="ERROR"):
             return True, f"[WARN] There is a server with {difference} more players online."
         else:
             return False, ""
+    return False, f"[WARN] Could not poll Roblox servers. Is Roblox down?"
 
 
 def get_current_server_id():
-    instances_url = f"https://www.roblox.com/games/{globals.Roblox.game_id}/Become-Fumo#!/game-instances"
-    file_name = f"{time.time()}.txt"
-    check_js = """var gameID = "ERROR"; try { gameID = $(".rbx-game-server-item-container").first().find("[src*='""" + globals.Roblox.avatar_id + """']").parents("[data-gameid]").attr("data-gameid") } finally { const a = document.createElement("a"); const file = new Blob([gameID], {type: "text/plain"}); a.href= URL.createObjectURL(file); a.download = '""" + file_name + """'; a.click();URL.revokeObjectURL(a.href); }"""
-    run_javascript_in_browser(instances_url, check_js, False)
-    log("Opening Output File...")
-    winsound.Beep(70, 100)
-    file_path = os.path.join(Path.home(), "Downloads", file_name)
-    current_server_id = "ERROR"
-    if os.path.exists(file_path):
-        with open(file_path, "r") as f:
-            current_server_id = f.read()
-        if os.path.exists(file_path):
-            os.remove(file_path)
-    log("Returning Current Server ID...")
-    winsound.Beep(70, 100)
-    log("")
-    return current_server_id
+    current_server_id = "N/A"
+    url = f"https://games.roblox.com/v1/games/{globals.Roblox.game_id}/servers/Public?sortOrder=Asc&limit=10"
+    try:
+        response = requests.get(url)
+    except Exception:
+        print(format_exc())
+        return "ERROR"
+    if response.status_code == 200:
+        response_result = response.json()
+        servers = response_result["data"]
+        for server in servers:
+            if globals.Roblox.player_token in server["playerTokens"]:
+                current_server_id = server["id"]
+                break
+        if current_server_id != "ERROR":
+            print(current_server_id)
+        return current_server_id
+    return "ERROR"
 
 
 def discord_log(message, author, author_avatar, author_url):
     screenshot_filename = None
     if not globals.Roblox.action_running:
         screenshot_filename = take_screenshot()
-    webhook_url = os.getenv("DISCORD_WEBHOOK_CHAT_CHANNEL")
+    webhook_urls = [
+        os.getenv("DISCORD_WEBHOOK_CHAT_CHANNEL"),
+        os.getenv("DISCORD_WEBHOOK_CHAT_CHANNEL_FUNKY")
+    ]
 
     webhook_data = {
         "embeds": [
@@ -532,21 +525,24 @@ def discord_log(message, author, author_avatar, author_url):
     }
 
     # for all params, see https://discordapp.com/developers/docs/resources/channel#embed-object
-    result = requests.post(webhook_url, json=webhook_data)
-    try:
-        result.raise_for_status()
-    except requests.exceptions.HTTPError as err:
-        print(err)
-    else:
-        print(f"[Logged] {message}")
-
-    # Send screenshot
+    screenshot_binary = None
     if screenshot_filename is not None:
         if os.path.exists(screenshot_filename):
             with open(screenshot_filename, "rb") as f:
                 screenshot_binary = f.read()
             if os.path.exists(screenshot_filename):
                 os.remove(screenshot_filename)
+    for webhook_url in webhook_urls:
+        result = requests.post(webhook_url, json=webhook_data)
+        try:
+            result.raise_for_status()
+        except requests.exceptions.HTTPError as err:
+            print(err)
+        else:
+            print(f"[Logged] {message}")
+
+        # Send screenshot
+        if screenshot_binary is not None:
             requests.post(webhook_url, files={f"_{screenshot_filename}": (screenshot_filename, screenshot_binary)})
             try:
                 result.raise_for_status()
@@ -556,7 +552,7 @@ def discord_log(message, author, author_avatar, author_url):
                 print(f"[Logged Screenshot] {message}")
 
 
-def notify_admin(message):
+def notify_admin(message):  # todo: Seperate always-running process
     webhook_url = os.getenv("DISCORD_WEBHOOK_DEV_CHANNEL")
     webhook_data = {
         "content": f"<@{os.getenv('DISCORD_OWNER_ID')}>\n{message}",
@@ -580,10 +576,14 @@ def check_for_better_server():
 
     log_process("Checking for better server")
     current_server_id = get_current_server_id()
-    while current_server_id == "":
-        log_process("Retrying better server check")
+    while current_server_id == "ERROR":
+        log_process("Failed! Retrying better server check")
         sleep(5)
         current_server_id = get_current_server_id()
+    if current_server_id == "N/A":
+        log_process("Could not find FumoCam in any servers")
+        globals.Roblox.action_queue.append("handle_crash")
+        return False
     should_change_servers, change_server_status_text = check_if_should_change_servers(current_server_id)
     log(change_server_status_text)
     output_log("change_server_status_text", change_server_status_text)
@@ -646,8 +646,8 @@ def turn_camera(direction_obj):
 
 def check_better_server_loop():
     while True:
-        sleep(13 * 60)
         globals.Roblox.action_queue.append("check_for_better_server")
+        sleep(5 * 60)
 
 
 def get_english_timestamp(time_var):
@@ -675,16 +675,12 @@ def get_english_timestamp(time_var):
 
 def timer_loop():
     event_time_struct = time.strptime(globals.OBS.event_time, "%Y-%m-%d %I:%M:%S%p")
-    event_end_time_struct = time.strptime(globals.OBS.event_end_time, "%Y-%m-%d %I:%M:%S%p")
-    seconds_since_event = time.mktime(event_end_time_struct) - time.mktime(event_time_struct)
-    english_time_since_event = get_english_timestamp(seconds_since_event)
-    output_log("time_since_event", english_time_since_event)
-    # while True:
-    #    seconds_since_event = time.time() - time.mktime(event_time_struct)
-    #    english_time_since_event = get_english_timestamp(seconds_since_event)
-    #    with open("time_since_event.txt", "w") as f:
-    #        f.write(english_time_since_event)
-    #    sleep(1)
+    # event_end_time_struct = time.strptime(globals.OBS.event_end_time, "%Y-%m-%d %I:%M:%S%p")
+    while globals.Roblox.event_timer_running:
+        seconds_since_event = time.time() - time.mktime(event_time_struct)
+        english_time_since_event = get_english_timestamp(seconds_since_event)
+        output_log("time_since_event", english_time_since_event)
+        sleep(1)
 
 
 def clock_loop():
@@ -700,33 +696,24 @@ def exploit_window_checker(ret_value, potential_names):
     searching_for_window = True
     while searching_for_window:
         sleep(1)
-        # for i in pyautogui.getAllTitles():
-        #    print('"'+i+'"')
-        # print("\n\n\n\n")
-
         for window in pyautogui.getAllWindows():
             if window.title in potential_names:
                 searching_for_window = False
                 ret_value.value = potential_names.index(window.title)
-                while window.title in pyautogui.getAllTitles():
-                    try:
-                        print(f"Focusing on '{window.title}'")
-                        window.focus()
-                    except Exception:
-                        print(f"ERROR IN FOCUSING ON '{window.title}'")
-                    sleep(0.2)
-                    try:
-                        print(f"Activating '{window.title}'")
-                        window.activate()
-                    except Exception:
-                        print(f"ERROR IN ACTIVATING '{window.title}'")
-                    sleep(0.3)
-                    pydirectinput.press("space")
+                for i in range(3):  # Attempt a maximum of 3 tries
+                    if window.title not in potential_names:
+                        break
+                    window.close()
                     sleep(0.3)
                 break
 
 
-def inject_lua(lua_code, attempts=0):
+def inject_lua(lua_code, attempts=0):  # todo: Move to seperate file
+    if globals.Roblox.injector_disabled:
+        log("Advanced commands are currently broken, sorry!")
+        sleep(5)
+        log("")
+        return False
     original_directory = os.getcwd()
     os.chdir(globals.Roblox.injector_file_path)
 
@@ -760,8 +747,13 @@ def inject_lua(lua_code, attempts=0):
     return True
 
 
-def load_exploit():
+def load_exploit():  # todo: Move to seperate file
     print("loading exploit")
+    if globals.Roblox.injector_disabled:
+        log("Advanced commands are currently broken, sorry!")
+        sleep(5)
+        log("")
+        return False
     original_directory = os.getcwd()
     injector_folder = os.path.join(globals.Roblox.injector_file_path)
     os.chdir(injector_folder)
@@ -769,7 +761,8 @@ def load_exploit():
     potential_names = [
         "Game Process Not Found",
         "NamedPipeExist!",
-        "NamedPipeDoesntExist"
+        "NamedPipeDoesntExist",
+        "EasyExploit"
     ]
     ret_value = multiprocess.Value('i', -1)
     non_fatal_error = True
@@ -793,16 +786,26 @@ def load_exploit():
     if ret_value.value != -1:
         error_result = potential_names[ret_value.value]
         print(error_result)
-        if error_result == "Game Process Not Found":
-            load_exploit()
+        if error_result in ["Game Process Not Found", "EasyExploit", "NamedPipeDoesntExist"]:
             non_fatal_error = False
     if non_fatal_error:
         inject_lua("""setfflag("AbuseReportScreenshot", "False")
         setfflag("AbuseReportScreenshotPercentage", "0")""")
+    else:
+        kill_process("chrome.exe")
+        globals.Roblox.injector_disabled = True           
+        notify_admin(f"Injector has been patched, navigate to location manually")
+        log("Warning: Injector failed, this can happen every 7 days.\nPlease wait for dev to manually relocate.")
+        output_log("injector_failure", "INJECTOR FAILED\nAdvanced commands may not work")
+        sleep(10)
+        log("")
+        return False
+
+    kill_process("chrome.exe")
     return non_fatal_error
 
 
-def test_teleport(location_name):
+def test_teleport(location_name):  # todo: Move tests to new file
     winsound.Beep(40, 600)
     winsound.Beep(70, 400)
     chosen_location = globals.Roblox.teleport_locations[location_name]
@@ -812,6 +815,14 @@ def test_teleport(location_name):
     game.Players.LocalPlayer.Character.PrimaryPart.CFrame = CFrame.new(game.Players.LocalPlayer.Character.PrimaryPart.Position) * CFrame.Angles({rot})
     workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position) * CFrame.Angles({cam_rot})""")
     winsound.Beep(90, 300)
+
+
+def jump():
+    check_active()
+    sleep(0.75)
+    pydirectinput.keyDown('space')
+    sleep(0.25)
+    pydirectinput.keyUp('space')
 
 
 def teleport(location_name, no_log=False):
@@ -849,6 +860,7 @@ def teleport(location_name, no_log=False):
     winsound.Beep(70, 400)
     chosen_location = cfg.teleport_locations[location_name]
     pos, rot, cam_rot = chosen_location["pos"], chosen_location["rot"], chosen_location["cam"]
+    # todo: Probably best to write LUA in seperate files
     # noinspection LongLine
     inject_lua(f"""game.Players.LocalPlayer.Character:MoveTo(Vector3.new({pos}))
     game.Players.LocalPlayer.Character.PrimaryPart.CFrame = CFrame.new(game.Players.LocalPlayer.Character.PrimaryPart.Position) * CFrame.Angles({rot})
@@ -865,6 +877,7 @@ def teleport(location_name, no_log=False):
             sleep(1)
         return_location = cfg.teleport_locations[cfg.current_location]
         pos, rot, cam_rot = return_location["pos"], return_location["rot"], return_location["cam"]
+        # todo: Probably best to write LUA in seperate files
         # noinspection LongLine
         inject_lua(f"""game.Players.LocalPlayer.Character:MoveTo(Vector3.new({pos}))
     game.Players.LocalPlayer.Character.PrimaryPart.CFrame = CFrame.new(game.Players.LocalPlayer.Character.PrimaryPart.Position) * CFrame.Angles({rot})
@@ -873,17 +886,20 @@ def teleport(location_name, no_log=False):
         cfg.current_location = location_name
     log("", no_log)
     log_process("", no_log)
+    jump()  # If knocked over, clear sitting effect
     send_chat(cfg.current_emote)
     return True
 
 
-def print_pos():
+def print_pos():  # todo: Move tests to new file
+    # todo: Probably best to write LUA in seperate files
     inject_lua(f"""
     print("\\n\\n")
     print("Position:",game.Players.LocalPlayer.Character.PrimaryPart.Position)""")
 
 
-def test_cam():
+def test_cam():  # todo: Move tests to new file
+    # todo: Probably best to write LUA in seperate files
     inject_lua(f"""
     print("\\n\\n")
     print("Position:", game.Players.LocalPlayer.Character.PrimaryPart.Position)
@@ -902,9 +918,10 @@ def spectate_loop():
     cfg = globals.Roblox
     while True:
         sleep(15 * 60)
+        if globals.Roblox.injector_disabled:
+            continue
         cfg.next_possible_teleport = 0
         cfg.action_queue.append("spectate")
-        cfg.action_queue.append({"tp": cfg.current_location})
 
 
 def goto(target):
@@ -928,6 +945,7 @@ def goto(target):
     cfg.next_possible_teleport = time.time() + 30
     winsound.Beep(40, 600)
     winsound.Beep(70, 400)
+    # todo: Probably best to write LUA in seperate files
     # noinspection LongLine
     inject_lua(f"""
     local player_list = game.Players:GetPlayers()
@@ -943,7 +961,8 @@ def goto(target):
             local current_pos = game.Players.LocalPlayer.Character.PrimaryPart.Position
             if (current_pos.y > 65) then
                 game.Players.LocalPlayer.Character:MoveTo(original_pos)
-                game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("[Could not teleport to player! (Would get stuck on roof of world)]" , "All")
+                game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("[This player is in a location I can't teleport to!]" , "All")
+                game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("[Can only teleport to players outside and not on objects!]" , "All")
                 break
             else 
                 game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("[Hello! Someone on T witch asked me to teleport to you.]" , "All")
@@ -957,6 +976,7 @@ def goto(target):
     sleep(10)  # Initial Teleport
     winsound.Beep(90, 300)
     sleep(3)  # Skybox check
+    jump()  # If knocked over, clear sitting effect
     send_chat(cfg.current_emote)
     log("")
     log_process("")
@@ -964,6 +984,9 @@ def goto(target):
 
 
 def spectate_random():
+    if globals.Roblox.injector_disabled:
+        log(f"Cannot spectate, injector functionality is currently broken!")
+        return False
     cfg = globals.Roblox
     if cfg.next_possible_teleport > time.time():
         log(f"Spectate on cool-down! Please wait {round(cfg.next_possible_teleport - time.time())} seconds!")
@@ -976,6 +999,7 @@ def spectate_random():
     log("Spectating up to 10 random players")
     send_chat("[Spectating players! Won't be able to see nearby chat. Be right back!]")
 
+    # todo: Probably best to write LUA in seperate files
     inject_lua("""
     local function shuffle(array)
         -- fisher-yates
@@ -1014,49 +1038,7 @@ def spectate_random():
     log("")
 
 
-def anti_gravity():
-    inject_lua("""
-    -- The factor by which gravity will be counteracted
-local MOON_GRAVITY = 0.5
-local function setGravity(part, g)
-    local antiGravity = part:FindFirstChild("AntiGravity")
-    if g == 1 then
-        -- Standard gravity; destroy any gravity-changing force
-        if antiGravity then
-            antiGravity:Destroy()
-        end 
-    else
-        -- Non-standard gravity: create and change gravity-changing force
-        if not antiGravity then
-            antiGravity = Instance.new("BodyForce")
-            antiGravity.Name = "AntiGravity"
-            antiGravity.Archivable = false
-            antiGravity.Parent = part
-        end
-        antiGravity.Force = Vector3.new(0, part:GetMass() * workspace.Gravity * (1 - g), 0)
-    end
-end
-local function moonGravity(part)
-    setGravity(part, 0.001)
-end
-local function recursiveMoonGravity(object)
-    if object:IsA("BasePart") then
-        moonGravity(object)
-    end
-    for _, child in pairs(object:GetChildren()) do
-        recursiveMoonGravity(child)
-    end
-end
-local function onDescendantAdded(object)
-    if object:IsA("BasePart") then
-        moonGravity(object)
-    end
-end
-recursiveMoonGravity(workspace)
-workspace.DescendantAdded:Connect(onDescendantAdded)""")
-
-
-class TwitchBot(irc.bot.SingleServerIRCBot):
+class TwitchBot(irc.bot.SingleServerIRCBot):  # todo: Move to seperate file?
     def __init__(self, username, client_id, token, channel):
         self.client_id = client_id
         self.token = token
@@ -1075,7 +1057,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         print(f"Connecting to {server} on port {port}...")
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port, f"oauth:{token}")], username, username)
 
-    def on_welcome(self, c, e):
+    def on_welcome(self, c, _):
         print('Joining ' + self.channel)
         c.cap('REQ', ':twitch.tv/membership')
         c.cap('REQ', ':twitch.tv/tags')
@@ -1083,7 +1065,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         c.join(self.channel)
         print('Joined ' + self.channel)
 
-    def on_pubmsg(self, c, e):
+    def on_pubmsg(self, _, e):
         author = "Twitch"
         for tag in e.tags:
             if tag["key"] == "display-name":
@@ -1102,9 +1084,9 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
             self.do_command(e, cmd, args, author)
         return
 
-    def do_command(self, e, cmd, args, author):
+    @staticmethod
+    def do_command(_, cmd, args, author):
         cfg = globals.Roblox
-        c = self.connection
         is_dev = author.lower() in globals.Twitch.admins
         is_owner = author.lower() == "scary08rblx"
         if cmd == "rejoin" and is_dev:
@@ -1200,7 +1182,7 @@ def commands_loop():
         },
         {
             "command": "!dev Your Message",
-            "help": "Sends \"Your Message\" to devs discord account, USE IF CAM IS DOWN"
+            "help": "EMERGENCY ONLY, Sends \"Your Message\" to devs discord account"
         },
     ]
     while True:
@@ -1218,107 +1200,121 @@ def commands_loop():
             sleep(10)
 
 
-def process_queue():
+def do_process_queue():  # todo: Investigate beneifts of multithreading over singlethreaded/async
     cfg = globals.Roblox
-    while True:
-        sleep(0.1)
-        if cfg.action_running:
-            continue
-        if len(cfg.action_queue) > 0:
-            action = cfg.action_queue[0]
-            if action == "anti-afk":
-                cfg.action_running = True
-                do_anti_afk()
-                cfg.action_running = False
-            elif action == "anti-afk-advert":
-                cfg.action_running = True
-                do_anti_afk_advert()
-                cfg.action_running = False
-            elif "turn_camera_direction" in action:
-                cfg.action_running = True
-                turn_direction = action['turn_camera_direction']
-                turn_time = action['turn_camera_time']
-                log_process(f"{turn_direction.upper()} for {turn_time}s")
-                turn_camera(action)
-                log_process("")
-                cfg.action_running = False
-            elif "zoom_camera_direction" in action:
-                cfg.action_running = True
-                zoom_direction = "in" if action['zoom_camera_direction'] == "i" else "out"
-                zoom_time = action['zoom_camera_time']
-                log_process(f"Zooming {zoom_direction} for {zoom_time}s")
-                zoom_camera(action)
-                log_process("")
-                cfg.action_running = False
-            elif action == "check_for_better_server":
-                cfg.action_running = True
+    if len(cfg.action_queue) > 0:
+        action = cfg.action_queue[0]
+        print("running Action Queue")
+        print(cfg.action_queue)
+        if action == "anti-afk":
+            cfg.action_running = True
+            do_anti_afk()
+            cfg.action_running = False
+        elif action == "anti-afk-advert":
+            cfg.action_running = True
+            do_anti_afk_advert()
+            cfg.action_running = False
+        elif "turn_camera_direction" in action:
+            cfg.action_running = True
+            turn_direction = action['turn_camera_direction']
+            turn_time = action['turn_camera_time']
+            log_process(f"{turn_direction.upper()} for {turn_time}s")
+            turn_camera(action)
+            log_process("")
+            cfg.action_running = False
+        elif "zoom_camera_direction" in action:
+            cfg.action_running = True
+            zoom_direction = "in" if action['zoom_camera_direction'] == "i" else "out"
+            zoom_time = action['zoom_camera_time']
+            log_process(f"Zooming {zoom_direction} for {zoom_time}s")
+            zoom_camera(action)
+            log_process("")
+            cfg.action_running = False
+        elif action == "check_for_better_server":
+            crashed = do_crash_check()
+            if not crashed:
                 check_for_better_server()
                 check_active()
-                cfg.action_running = False
-            elif "chat_with_name" in action:
-                name = action["chat_with_name"][0]
-                send_chat(name)
-                sleep(len(name) * 0.05)
-                print(name)
-                msgs = action["chat_with_name"][1:]
-                for msg in msgs:
-                    send_chat(msg)
-            elif "chat" in action:
-                for message in action["chat"]:
-                    send_chat(message)
-            elif action == "handle_crash":
-                cfg.action_running = True
-                handle_join_new_server(crash=True)
-                cfg.action_running = False
-            elif action == "handle_join_new_server":
-                cfg.action_running = True
-                handle_join_new_server()
-                cfg.action_running = False
-            elif "tp" in action:
-                cfg.action_running = True
-                teleport(action["tp"])
-                check_active()
-                cfg.action_running = False
-            elif "goto" in action:
-                cfg.action_running = True
-                goto(action["goto"])
-                check_active()
-                cfg.action_running = False
-            elif action == "spectate":
-                cfg.action_running = True
-                spectate_random()
-                check_active()
-                cfg.action_running = False
             else:
-                print("queue failed")
+                cfg.action_queue.insert(0, "handle_crash")
+        elif "chat_with_name" in action:
+            name = action["chat_with_name"][0]
+            send_chat(name)
+            sleep(len(name) * 0.05)
+            print(name)
+            msgs = action["chat_with_name"][1:]
+            for msg in msgs:
+                send_chat(msg)
+        elif "chat" in action:
+            for message in action["chat"]:
+                send_chat(message)
+        elif action == "handle_crash":
+            cfg.action_running = True
+            handle_join_new_server(crash=True)
+            cfg.action_running = False
+        elif action == "handle_join_new_server":
+            cfg.action_running = True
+            handle_join_new_server()
+            cfg.action_running = False
+        elif "tp" in action:
+            cfg.action_running = True
+            teleport(action["tp"])
+            check_active()
+            cfg.action_running = False
+        elif "goto" in action:
+            cfg.action_running = True
+            goto(action["goto"])
+            check_active()
+            cfg.action_running = False
+        elif action == "spectate":
+            cfg.action_running = True
+            spectate_random()
+            check_active()
+            cfg.action_running = False
+        else:
+            print("queue failed")
 
-            cfg.action_queue.pop(0)
-            sleep(1)
+        cfg.action_queue.pop(0)
+
+
+def process_queue_loop():
+    while True:
+        sleep(0.1)
+        if globals.Roblox.action_running:
+            continue
+        do_process_queue()
+        sleep(1)
 
 
 def main():
     log_process("")
     log("")
     output_log("change_server_status_text", "")
-
-    check_active()
-    thread_functions = [process_queue, check_better_server_loop, twitch_main, anti_afk, commands_loop, timer_loop,
+    output_log("injector_failure", "")
+    crashed = do_crash_check()
+    if crashed or "Roblox" not in pyautogui.getAllTitles():
+        globals.Roblox.action_queue.append("handle_crash")
+        do_process_queue()
+    else:
+        check_active()
+        load_exploit()
+    print("Starting Threads")
+    thread_functions = [process_queue_loop, check_better_server_loop, twitch_main, anti_afk, commands_loop, timer_loop,
                         clock_loop, crash_check_loop, spectate_loop]
     for thread_function in thread_functions:
         threading.Thread(target=thread_function).start()
-    if "Roblox" not in pyautogui.getAllTitles():
-        globals.Roblox.action_queue.append("handle_crash")
+    print("Done Main")
+
+
+def test_character_select(click_mouse=True):  # todo: Move tests to new file
+    check_active()
+    sleep(1)
+    click_character_in_menu(click_mouse=click_mouse)
 
 
 if __name__ == "__main__":
     pyautogui.FAILSAFE = False
-    # load_exploit()
     main()
-    # twitch_main()
-    # character_select_button = spawn_wait_until_loaded()
-    # change_characters(character_select_button)
-    # check_for_better_server()
-    # print(get_current_server_id())
-    # test_cam()
-    # test_teleport("miko")
-    # teleport("comedy2")
+    # load_exploit()
+    # test_character_select(click_mouse=False)
+    # change_characters()
