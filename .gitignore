@@ -1,6 +1,7 @@
 # Project Files
 output/
 /resources/injector/
+/resources/EasyExploits.dll
 
 # .idea folder
 .idea/
@@ -109,7 +110,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+src/.env
 .venv
 env/
 venv/
