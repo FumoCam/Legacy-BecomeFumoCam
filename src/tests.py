@@ -38,6 +38,11 @@ def test_character_select_full(click_mouse=True):
     change_characters()
 
 
+def test_exploit():
+    load_exploit()
+
+
 if __name__ == "__main__":
     pyautogui.FAILSAFE = False
     test_character_select_full(click_mouse=True)
+    #test_exploit()
