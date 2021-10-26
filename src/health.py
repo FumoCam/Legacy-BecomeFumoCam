@@ -210,7 +210,6 @@ async def open_roblox_with_selenium_browser(js_code):
             success = True
             break
         await async_sleep(sleep_time)
-        Beep(40, 25)
     try:
         driver.quit()       
         kill_process(CFG.browser_driver_executable_name)
@@ -253,11 +252,12 @@ async def get_best_server():
 
 async def click_character_select_button():
     await async_sleep(0.5)
-    Beep(150, 100)
+    #Beep(150, 100)
     button_x, button_y = await get_character_select_button_pos()
     pydirectinput.moveTo(button_x, button_y)
     await alt_tab_click()
-    Beep(100, 50)
+    await async_sleep(0.5)
+    #Beep(100, 50)
 
 
 async def scroll_to_character_in_menu():
@@ -273,14 +273,12 @@ async def scroll_to_character_in_menu():
 async def click_character_in_menu(click_mouse=True, click_random=False):
     character_name = "Momiji" if not click_random else "a random character"
     log(f"Clicking {character_name}")
-    Beep(250, 100)
     button_x, button_y = round(pyautogui.size()[0] * 0.5), round(
         SCREEN_RES["height"] * CFG.character_select_screen_height_to_click)  # Toggle Collisions button
     if click_random:
         button_y += int(SCREEN_RES["height"]*CFG.respawn_character_select_offset)
     pydirectinput.moveTo(button_x, button_y)
     await alt_tab_click(click_mouse=click_mouse)
-    Beep(100, 50)
     await async_sleep(0.5)
 
 
@@ -317,7 +315,10 @@ async def change_characters(respawn=False):
         await scroll_to_character_in_menu()
     await click_character_in_menu()
     log("Closing character select")
+    await async_sleep(0.5)
     await click_character_select_button()
+    await async_sleep(0.5)
+    pydirectinput.moveTo(SCREEN_RES["width"], SCREEN_RES["height"])
 
 
 async def server_spawn():
@@ -339,6 +340,7 @@ async def server_spawn():
 
 
 async def handle_join_new_server(crash=False):
+    CFG.crashed = True  # Just in case
     process_name = "Automatic Relocation System"
     action = "Detected more optimal server. Relocating."
     if crash:
@@ -366,5 +368,6 @@ async def handle_join_new_server(crash=False):
     log_process("")
     log("Complete. Please use '!dev Error' if we're not in-game.")
     await async_sleep(5)
+    CFG.crashed = False
     log_process("")
     log("")
