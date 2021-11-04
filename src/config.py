@@ -46,24 +46,24 @@ class MainBotConfig:
             "help": "Sends \"Your Message\" in-game"
         },
         {
-            "command": "!left 0.2 or !right 0.2",
-            "help": "Turn camera left or right for 0.2s"
+            "command": "!left 90 or !right 360",
+            "help": "Turn camera x degrees left or right"
         },
         {
-            "command": "!zoomin 0.1 or !zoomout 0.1",
-            "help": "Zoom camera in or out for 0.1s"
+            "command": "!up 45 or !down 180",
+            "help": "Turn camera x degrees up or down"
         },
         {
-            "command": "!sit",
-            "help": "Clicks the sit button"
+            "command": "!zoomin 100 or !zoomout 100",
+            "help": "Zoom camera in or out 100%"
         },
         {
             "command": "!dev Your Message",
             "help": "EMERGENCY ONLY, Sends \"Your Message\" to devs discord account"
         },
         {
-            "command": "!move w 5",
-            "help": "Moves forwards for 5 seconds"
+            "command": "!move w 10",
+            "help": "Moves forwards # FumoCam units. Max 10. (!move a, !move d, !move s)"
         },
         {
             "command": "!leap 0.7 0.5",
@@ -97,10 +97,11 @@ class MainBotConfig:
     character_select_image_path = os.path.join(RESOURCES_PATH, "character_select.png")
     character_select_scroll_down_amount = 12
     character_select_scroll_down_scale = -200
-    character_select_screen_height_to_click = 0.50
+    character_select_screen_height_to_click = 0.52
     character_select_scroll_speed = 0.2
     
     chat_name_sleep_factor = 0.05  # Seconds to wait per char in users name before sending their message
+    chat_bypasses = {}  # Bypass filters for harmless words
     
     crashed = False
     
@@ -124,8 +125,11 @@ class MainBotConfig:
     max_attempts_sit_button = 3
     max_seconds_browser_launch = 20
     max_attempts_better_server = 20
-    player_token = "BD7F4C1D8063321CDFE702866B105EFB"  # F_umoCam02
+    #player_token = "BD7F4C1D8063321CDFE702866B105EFB"  # F_umoCam02
     #player_token = "877C2AD2DB86BC486676330B47AFD9F8"  # F_umoCamBeta01
+    #player_token = "D5E4A52E9B12F1E36D7269325943AE35"   # BecomeF_umoCam
+    #player_token = "A9AFD097DCB5C13B801697A4104C3A61"   # F_umoCam04
+    player_token = "CD456AA86FE893389524D51774A0916D"    # F_umoCam05
     respawn_character_select_offset = -0.1    
     sit_button_position = (0.79, 0.89)
 

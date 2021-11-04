@@ -110,9 +110,28 @@ class TwitchBot(commands.Bot):
     
     
     # Complex commands/Commands with args
+    async def camera_pitch_handler(self, pitch_camera_direction, ctx):
+        pitch = 45
+        max_pitch = 180
+        args = await self.get_args(ctx)
+        if args:
+            try:
+                number = float(args[0])
+                if max_pitch >= number > 0:
+                    turn_time = number
+                else:
+                    await ctx.send(f"[{args[0]} is too high/low! Please use an angle between 0 and {max_pitch}.]")
+                    return
+            except Exception:
+                await ctx.send(f"[Error! Invalid number specified.]")
+                return
+        await CFG.add_action_queue({"pitch_camera_direction": pitch_camera_direction, "pitch_camera_degrees": pitch})
+    
+        
+    # Complex commands/Commands with args
     async def camera_turn_handler(self, turn_camera_direction, ctx):
-        turn_time = 0.1
-        max_turn_time = 2
+        turn_time = 45
+        max_turn_time = 360
         args = await self.get_args(ctx)
         if args:
             try:
@@ -120,7 +139,7 @@ class TwitchBot(commands.Bot):
                 if max_turn_time >= number > 0:
                     turn_time = number
                 else:
-                    await ctx.send(f"[{args[0]} is too high/low! Please use a time between 0 and {max_turn_time}.]")
+                    await ctx.send(f"[{args[0]} is too high/low! Please use an angle between 0 and 360.]")
                     return
             except Exception:
                 await ctx.send(f"[Error! Invalid number specified.]")
@@ -138,6 +157,18 @@ class TwitchBot(commands.Bot):
     async def right(self, ctx):
         turn_camera_direction = "right"
         await self.camera_turn_handler(turn_camera_direction, ctx)
+        
+        
+    @commands.command()
+    async def up(self, ctx):
+        pitch_camera_direction = "up"
+        await self.camera_pitch_handler(pitch_camera_direction, ctx)
+    
+    
+    @commands.command()
+    async def down(self, ctx):
+        pitch_camera_direction = "down"
+        await self.camera_pitch_handler(pitch_camera_direction, ctx)
     
     
     @commands.command()
@@ -191,12 +222,20 @@ class TwitchBot(commands.Bot):
             return
             
         msg = " ".join(args)
+        if len(msg) > 100:
+            await ctx.send(f"[In-game character limit is 100! Please shorten your message.]")
+            return
         is_dev = await self.is_dev(ctx.message.author)
         action_queue_item = {}
         if msg.startswith("[") or msg.startswith("/w"):  # Whisper functionality
+            await ctx.send(f"[You do not have permission to whisper.]")
             return
-        elif (msg.startswith("/mute") or msg.startswith("/unmute")) and is_dev:  # Make muting dev-only
-            action_queue_item = {"chat": [msg]}
+        elif (msg.startswith("/mute") or msg.startswith("/unmute")):  # Make muting dev-only
+            if is_dev:
+                action_queue_item = {"chat": [msg]}
+            else:
+                await ctx.send(f"[You do not have permission to mute/unmute.]")
+                return
         elif msg.startswith("/"):
             if msg.startswith("/e"):
                 CFG.current_emote = msg
@@ -211,7 +250,7 @@ class TwitchBot(commands.Bot):
     @commands.command()
     async def move(self, ctx):
         move_time = 1
-        max_move_time = 5
+        max_move_time = 10
         valid_movement_keys = ["w","a","s","d"]
         args = await self.get_args(ctx)
         if not args or args[0].lower() not in valid_movement_keys:
@@ -224,7 +263,7 @@ class TwitchBot(commands.Bot):
                 if max_move_time >= number > 0:
                     move_time = number
                 else:
-                    await ctx.send(f"[{args[1]} is too high/low! Please use a time between 0 and {max_move_time}.]")
+                    await ctx.send(f"[{args[1]} is too high/low! Please use a unit between 0 and {max_move_time}.]")
                     return
             except Exception:
                 await ctx.send(f"[Error! Invalid number specified.]")
@@ -242,8 +281,8 @@ class TwitchBot(commands.Bot):
     
     
     async def zoom_handler(self, zoom_direction, ctx):
-        zoom_time = 0.05
-        max_zoom_time = 1
+        zoom_time = 15
+        max_zoom_time = 100
         args = await self.get_args(ctx)
         if args:
             try:
@@ -251,7 +290,7 @@ class TwitchBot(commands.Bot):
                 if max_zoom_time >= number > 0:
                     zoom_time = number
                 else:
-                    await ctx.send(f"[{args[0]} is too high/low! Please use a time between 0 and {max_zoom_time}.]")
+                    await ctx.send(f"[{args[0]} is too high/low! Please use a percentage between 0 and {max_zoom_time}.]")
                     return
             except Exception:
                 await ctx.send(f"[Error! Invalid number specified.]")
