@@ -1,4 +1,4 @@
-from arduino_integration import *
+from config import *
 import os
 from time import sleep,time,strftime,strptime,mktime
 from asyncio import sleep as async_sleep
