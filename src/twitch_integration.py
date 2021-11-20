@@ -272,12 +272,26 @@ class TwitchBot(commands.Bot):
                 return
         await CFG.add_action_queue({"movement": "move", "move_key": move_key, "move_time": move_time, "override": await self.is_dev(ctx.message.author)})
 
-
+    
+    
+    @commands.command()
+    async def nav(self, ctx):
+        args = await self.get_args(ctx)
+        if not args or args[0].lower() not in CFG.nav_locations:
+            await ctx.send(f"[Please specify a valid location! (i.e. \"!nav shrimp\")]")
+            return
+        location = args[0].lower()
+        await ctx.send(f"[Requested AutoNav! This is experimental, so if it does not work the first time, please re-run the command.]")
+        await ctx.send(f"[If we did not respawn at any point, please run !respawnforce (we're stuck!).]")
+        await CFG.add_action_queue({"autonav": location})
+        
+    
+    
     @commands.command()
     async def rejoin(self, ctx):
         if await self.is_dev(ctx.author):
-            await CFG.add_action_queue("handle_crash")
             await ctx.send(f"[@{ctx.author.name} Added restart to queue]")
+            await CFG.add_action_queue("handle_crash")
         else:
             await ctx.send("[You do not have permission!]")
     

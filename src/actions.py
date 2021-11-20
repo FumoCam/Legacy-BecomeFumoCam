@@ -2,6 +2,7 @@
 import random
 from winsound import Beep
 from arduino_integration import *
+from spawn_detection import spawn_detection_main
 ACFG.initalize_serial_interface(do_log=False)
 
 
@@ -44,7 +45,9 @@ async def toggle_collisions():
     ACFG.moveMouseAbsolute(x=button_x, y=button_y)
     ACFG.left_click()
     Beep(100, 50)
-
+    CFG.collisions_disabled = not(CFG.collisions_disabled)
+    collisions_msg = "" if CFG.collisions_disabled else "[WARN] Griefing/Collisions enabled!"
+    output_log("collisions", collisions_msg)
     log("Closing Settings")
     await async_sleep(0.25)
     Beep(150, 100)
@@ -54,3 +57,18 @@ async def toggle_collisions():
     ACFG.left_click()
     await async_sleep(0.25)
     Beep(100, 50)
+
+
+async def respawn_character(chat=True):
+    await check_active()
+    log_process("Respawning")
+    if chat:
+        await send_chat("[Respawning!]")
+    await async_sleep(0.75)
+    ACFG.keyPress('KEY_ESC')
+    await async_sleep(0.5)
+    ACFG.keyPress('r')
+    await async_sleep(0.5)
+    ACFG.keyPress('KEY_RETURN')
+    await async_sleep(0.5)
+    log_process("")

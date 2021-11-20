@@ -1,5 +1,4 @@
 from actions import *
-from spawn_detection import main as cv_detect_spawn
 from selenium import webdriver
 import json
 
@@ -323,10 +322,13 @@ async def change_characters(respawn=False):
     else:
         await scroll_to_character_in_menu()
     sleep(1)
+    await async_sleep(1) # I have no idea what causes less errors
     await click_character_in_menu()
     log("Closing character select")
     await async_sleep(0.5)
+    sleep(0.5)
     await click_character_select_button()
+    sleep(1)
     await async_sleep(0.5)
     ACFG.resetMouse()
 
@@ -342,9 +344,12 @@ async def server_spawn():
         return False
     await async_sleep(1)
     if CFG.disable_collisions_on_spawn:
+        CFG.collisions_disabled = False
         await toggle_collisions()
+    await async_sleep(1)
     await change_characters()
     ACFG.resetMouse()
+    await auto_nav("shrimp", do_checks=False)
     return True
 
 
@@ -380,3 +385,45 @@ async def handle_join_new_server(crash=False):
     CFG.crashed = False
     log_process("")
     log("")
+
+
+async def auto_nav(location, do_checks=True):
+    #await check_active()
+    log_process("AutoNav")
+    if do_checks:
+        await check_active(force_fullscreen=False)
+        await async_sleep(0.5)
+        await send_chat(f"[AutoNavigating to {CFG.nav_locations[location]['name']}!]")
+        if not CFG.collisions_disabled:
+            log("Disabling collisions")
+            await toggle_collisions()
+            await async_sleep(0.5)
+        log("Jumping to clear any respawn locks")
+        ACFG.jump()
+        await async_sleep(1)
+        log("Respawning")
+        #await change_characters(respawn=True)
+        await respawn_character(chat=False)
+        await async_sleep(7)
+    log("Zooming out to full scale")
+    ACFG.zoom(zoom_direction_key="o", amount=105)
+    
+    spawn = spawn_detection_main()["location"]
+    log("Zooming in to precision movement scale")
+    ACFG.zoom(zoom_direction_key="i", amount=90)
+    if spawn == "comedy_machine":
+        comedy_to_main()
+        await async_sleep(3)
+    elif spawn == "tree_house":
+        treehouse_to_main()
+        await async_sleep(3)
+    if location == "shrimp":
+        main_to_shrimp_tree()
+    elif location == "ratcade":
+        main_to_ratcade()
+    elif location == "train":
+        main_to_train()
+    log("Zooming out to normal scale")
+    ACFG.zoom(zoom_direction_key="o", amount=30)
+    log("Complete! This is experimental, so please run \n'!nav shrimp' if it didn't work.")
+    await async_sleep(3)

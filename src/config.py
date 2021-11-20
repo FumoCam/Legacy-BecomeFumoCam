@@ -40,6 +40,50 @@ class MainBotConfig:
         '"BecomeFumoCam"!'
     ]
     censored_words = [] # Historically redacted
+    character_select_image_path = os.path.join(RESOURCES_PATH, "character_select.png")
+    character_select_scroll_down_amount = 13
+    character_select_scroll_down_scale = -200
+    character_select_screen_height_to_click = 0.44
+    character_select_scroll_speed = 0.2
+    
+    chat_name_sleep_factor = 0.05  # Seconds to wait per char in users name before sending their message
+    chat_bypasses = {}  # Bypass filters for harmless words
+    
+    crashed = False
+    
+    browser_driver_executable_name = "chromedriver.exe"
+    browser_driver_path = RESOURCES_PATH / browser_driver_executable_name
+    browser_executable_name = "chrome.exe"
+    browser_profile_path = RESOURCES_PATH / ".browser_profile"
+    Path(browser_profile_path).mkdir(parents=True, exist_ok=True)
+    browser_cookies_path = browser_profile_path / "browser_cookies.json"
+    
+    collisions_disabled = True
+    current_emote = "/e dance3"
+    event_timer_running = False
+    epoch_time = 1616817600
+    disable_collisions_on_spawn = True
+    game_executable_name = "RobloxPlayerBeta.exe"
+    game_id = 6238705697
+    game_id_nil = 7137029060
+    game_id_hinamizawa = 6601613056
+    game_instances_url = "https://www.roblox.com/games/6238705697/Become-Fumo#!/game-instances"
+    max_attempts_character_selection = 30
+    max_attempts_sit_button = 3
+    max_seconds_browser_launch = 20
+    max_attempts_better_server = 20
+    nav_locations = {
+        "shrimp": {"name": "Shrimp Tree"},
+        "ratcade": {"name": "Ratcade"},
+        "train": {"name": "Train Station"}
+    }
+    #player_token = "BD7F4C1D8063321CDFE702866B105EFB"  # F_umoCam02
+    #player_token = "877C2AD2DB86BC486676330B47AFD9F8"  # F_umoCamBeta01
+    #player_token = "D5E4A52E9B12F1E36D7269325943AE35"   # BecomeF_umoCam
+    #player_token = "A9AFD097DCB5C13B801697A4104C3A61"   # F_umoCam04
+    player_token = "CD456AA86FE893389524D51774A0916D"    # F_umoCam05
+    respawn_character_select_offset = -0.1    
+    sit_button_position = (0.79, 0.89)
     commands_list = [
         {
             "command": "!m Your Message",
@@ -64,6 +108,10 @@ class MainBotConfig:
         {
             "command": "!move w 10",
             "help": "Moves forwards # FumoCam units. Max 10. (!move a, !move d, !move s)"
+        },
+        {
+            "command": "!nav LocationName",
+            "help": f"AutoNavigates to a location. ({', '.join(list(nav_locations.keys()))})"
         },
         {
             "command": "!leap 0.7 0.5",
@@ -94,45 +142,6 @@ class MainBotConfig:
             "help": "Clicks the sit button."
         },
     ]
-    character_select_image_path = os.path.join(RESOURCES_PATH, "character_select.png")
-    character_select_scroll_down_amount = 12
-    character_select_scroll_down_scale = -200
-    character_select_screen_height_to_click = 0.52
-    character_select_scroll_speed = 0.2
-    
-    chat_name_sleep_factor = 0.05  # Seconds to wait per char in users name before sending their message
-    chat_bypasses = {}  # Bypass filters for harmless words
-    
-    crashed = False
-    
-    browser_driver_executable_name = "chromedriver.exe"
-    browser_driver_path = RESOURCES_PATH / browser_driver_executable_name
-    browser_executable_name = "chrome.exe"
-    browser_profile_path = RESOURCES_PATH / ".browser_profile"
-    Path(browser_profile_path).mkdir(parents=True, exist_ok=True)
-    browser_cookies_path = browser_profile_path / "browser_cookies.json"
-    
-    
-    current_emote = "/e dance3"
-    event_timer_running = False
-    epoch_time = 1616817600
-    disable_collisions_on_spawn = True
-    game_executable_name = "RobloxPlayerBeta.exe"
-    game_id = 6238705697
-    game_id_nil = 7137029060
-    game_id_hinamizawa = 6601613056
-    game_instances_url = "https://www.roblox.com/games/6238705697/Become-Fumo#!/game-instances"
-    max_attempts_character_selection = 30
-    max_attempts_sit_button = 3
-    max_seconds_browser_launch = 20
-    max_attempts_better_server = 20
-    #player_token = "BD7F4C1D8063321CDFE702866B105EFB"  # F_umoCam02
-    #player_token = "877C2AD2DB86BC486676330B47AFD9F8"  # F_umoCamBeta01
-    #player_token = "D5E4A52E9B12F1E36D7269325943AE35"   # BecomeF_umoCam
-    #player_token = "A9AFD097DCB5C13B801697A4104C3A61"   # F_umoCam04
-    player_token = "CD456AA86FE893389524D51774A0916D"    # F_umoCam05
-    respawn_character_select_offset = -0.1    
-    sit_button_position = (0.79, 0.89)
 
 
 CFG = MainBotConfig()  # Instantiate the config for use between files
