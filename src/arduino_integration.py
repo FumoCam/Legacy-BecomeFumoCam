@@ -1,5 +1,6 @@
 from utilities import *
 import serial  # pip install pyserial
+import serial.tools.list_ports  # TODO: figure out why not the same as above
 from time import sleep
 import json
 
@@ -7,12 +8,26 @@ import json
 class ArduinoConfig:
     
     interface_baudrate = 9300
-    interface_port = "COM3"
     interface_timeout = 0.1
-    
     interface = serial.Serial(baudrate=interface_baudrate, timeout=interface_timeout)
+    while True:
+        ports = [port.name for port in serial.tools.list_ports.comports() if "Arduino Leonardo" in port.description]
+        if len(ports) == 1:
+            interface.port = ports[0]
+            break
+        elif len(ports) == 0:
+            log("Precision chip not found by name,\nAssuming first available port")
+            sleep(1)
+            all_ports = serial.tools.list_ports.comports()
+            if len(all_ports) > 0:
+                interface.port = all_ports[0].name
+                log("")
+                break
+            log("No ports available! Is precision chip plugged in?")
+        else:
+            log("More than one precision chip detected!")
+        sleep(1)
     
-    interface.port = interface_port
     interface_ready = None
     
     

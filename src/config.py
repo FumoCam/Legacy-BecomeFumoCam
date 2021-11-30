@@ -3,6 +3,7 @@ from dotenv import load_dotenv  # pip3.9 install python-dotenv
 from pyautogui import size as get_monitor_size
 from mss import mss
 from pathlib import Path
+from shutil import copyfile
 
 load_dotenv()
 RESOURCES_PATH = Path.cwd().parent / "resources"
@@ -26,6 +27,7 @@ class OBS:
     output_folder = Path.cwd().parent / "output"
     event_time = "2021-06-09 12:05:00AM"
     event_end_time = "2021-05-03 10:23:18PM"
+    muted_icon_name = "muted_icon.png"
 
 
 class Discord:
@@ -39,11 +41,12 @@ class MainBotConfig:
         "This bot is live on T witch! Go to the roblox profile for a link or Google",
         '"BecomeFumoCam"!'
     ]
+    audio_muted = False
     censored_words = [] # Historically redacted
     character_select_image_path = os.path.join(RESOURCES_PATH, "character_select.png")
     character_select_scroll_down_amount = 13
     character_select_scroll_down_scale = -200
-    character_select_screen_height_to_click = 0.44
+    character_select_screen_height_to_click = 0.50
     character_select_scroll_speed = 0.2
     
     chat_name_sleep_factor = 0.05  # Seconds to wait per char in users name before sending their message
@@ -84,6 +87,10 @@ class MainBotConfig:
     player_token = "CD456AA86FE893389524D51774A0916D"    # F_umoCam05
     respawn_character_select_offset = -0.1    
     sit_button_position = (0.79, 0.89)
+    sound_control_executable_name = "SoundVolumeView.exe"
+    vlc_path = Path("C:\\", "Program Files", "VideoLAN", "VLC")
+    vlc_executable_name = "vlc.exe"
+    
     commands_list = [
         {
             "command": "!m Your Message",
@@ -140,6 +147,10 @@ class MainBotConfig:
         {
             "command": "!sit",
             "help": "Clicks the sit button."
+        },
+        {
+            "command": "!mute",
+            "help": "Music will still play, but toggles mute in-game sound effects."
         },
     ]
 

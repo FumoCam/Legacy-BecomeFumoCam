@@ -11,6 +11,7 @@ import requests
 import math
 import psutil
 
+
 def check_admin_and_run():
     from sys import executable as a_executable, argv as a_argv
     from ctypes import windll as a_windll
