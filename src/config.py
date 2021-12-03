@@ -96,10 +96,17 @@ class MainBotConfig:
     max_attempts_sit_button = 3
     max_seconds_browser_launch = 20
     max_attempts_better_server = 20
+    mouse_software_emulation = True
     nav_locations = {
         "shrimp": {"name": "Shrimp Tree"},
         "ratcade": {"name": "Ratcade"},
-        "train": {"name": "Train Station"}
+        "train": {"name": "Train Station"},
+        "classic": {"name": "'BecomeF umo: Classic' Portal"},
+        "treehouse": {"name": "Funky Treehouse"}
+    }
+    nav_post_zoom_in = {
+        "treehouse": 50,
+        "train": 0,
     }
     #player_token = "BD7F4C1D8063321CDFE702866B105EFB"  # F_umoCam02
     #player_token = "877C2AD2DB86BC486676330B47AFD9F8"  # F_umoCamBeta01
@@ -123,6 +130,7 @@ class MainBotConfig:
     vlc_path = Path("C:\\", "Program Files", "VideoLAN", "VLC")
     vlc_executable_name = "vlc.exe"
     
+    zoom_default = 30
     zoom_level = 50  # TODO: validate this is roughly correct on spawn
     zoom_max = 100
     zoom_min = 0

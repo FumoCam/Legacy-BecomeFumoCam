@@ -100,14 +100,28 @@ class ArduinoConfig:
 
 
     def left_click(self):
+        if CFG.mouse_software_emulation:
+            return self.left_click_software()
         payload = {"type": "leftClick"}
         self.arduino_interface(payload, 2) # Arbitrary max time for safety
     #left_click()
 
-
-    def leap(self, forward_time, jump_time):
-        payload = {"type": "leap", "forward_time": forward_time, "jump_time": jump_time}
-        self.arduino_interface(payload, max(payload["forward_time"], payload["jump_time"]))
+    def left_click_software(self, do_click=True):
+        """
+        Even pydirectinput cant click normally.
+        This is a work-around that actually clicks in the area the cursor was moved.
+        """
+        alt_tab_duration = 0.5
+        pyautogui.hotkey('alt', 'tab')
+        sleep(alt_tab_duration)
+        pyautogui.hotkey('alt', 'tab')
+        sleep(alt_tab_duration*2)
+        if do_click:
+            pydirectinput.click()
+            
+    def leap(self, forward_time, jump_time, direction_key="w", jump_delay=0):
+        payload = {"type": "leap", "forward_time": forward_time, "jump_time": jump_time, "direction_key": direction_key, "jump_delay": jump_delay}
+        self.arduino_interface(payload, max(payload["forward_time"], payload["jump_time"])+payload["jump_delay"])
         sleep(0.5)
     #leap(jump_time=1, forward_time=3)
 
@@ -133,18 +147,31 @@ class ArduinoConfig:
 
 
     def moveMouseAbsolute(self, x, y):
+        if CFG.mouse_software_emulation:
+            return self.moveMouseAbsolute_software(x, y)
         payload = {"type": "resetMouse", "width": SCREEN_RES["width"], "height": SCREEN_RES["height"]}
         self.arduino_interface(payload, 5) # Arbitrary max time for safety
         sleep(2)
         payload = {"type": "moveMouse", "x": x, "y": y}
         self.arduino_interface(payload, 5) # Arbitrary max time for safety
     #moveMouseAbsolute(x=SCREEN_RES["width"]*0.5, y=SCREEN_RES["height"]*0.5)
-
+    
+    
+    def moveMouseAbsolute_software(self, x, y):
+        pydirectinput.moveTo(x, y)
+        sleep(2)
+        
 
     def moveMouseRelative(self, x, y):
+        if CFG.mouse_software_emulation:
+            return self.moveMouseRelative_software(x, y)
         payload = {"type": "moveMouse", "x": x, "y": y}
         self.arduino_interface(payload, 5) # Arbitrary max time for safety
-    #moveMouse(x=0, y=SCREEN_RES["height"]*0.34)
+        
+
+    def moveMouseRelative_software(self, x, y):
+        pydirectinput.move(x, y) 
+        sleep(2)
 
 
     def scrollMouse(self, amount, down=True):
@@ -214,7 +241,7 @@ def treehouse_to_main():
     log("Treehouse -> Main")
     ACFG.move("w",3.3, raw=True)
     ACFG.move("d",0.2, raw=True)
-    ACFG.look("left", 1.105, raw=True)
+    ACFG.look("left", 1.10, raw=True)
     log_process("")
     log("")
 
@@ -224,14 +251,14 @@ def comedy_to_main():
     log("Comedy Machine -> Main")
     ACFG.move("w",3.75, raw=True)
     ACFG.move("a",0.5)
-    ACFG.look("right", 0.385, raw=True)
+    ACFG.look("right", 0.3875, raw=True)
     
     log_process("")
     log("")
 
 def main_to_shrimp_tree():
     log_process("AutoNav")
-    log("Main -> Shrimp Tree")
+    log(f"Main -> Shrimp Tree")
     #If main spawn is facing North,
     #Turn to face West
     ACFG.look("left", 0.75, raw=True)
@@ -290,10 +317,87 @@ def main_to_train():
     ACFG.move("s", 0.05, raw=True)
     ACFG.move("a", 0.075, raw=True)
     ACFG.move("s", 0.1, raw=True)
-    ACFG.zoom("o", 20)
     log_process("")
     log("")
+
+
+def main_to_classic():
+    log_process("AutoNav")
+    log("Main -> BecomeFumo Classic Portal")
+    ACFG.move("a", 0.25, raw=True)
+    ACFG.move("s", 4.5, raw=True)
+    ACFG.move("d", 1.75, raw=True)
+    ACFG.move("s", 2.6, raw=True)
+    ACFG.move("a", 1, raw=True)
+    ACFG.move("s", 2.55, raw=True)
+    ACFG.move("d", 1, raw=True)
+    ACFG.move("s", 2.5, raw=True)
+    ACFG.leap(forward_time=0.3, jump_time=0.25, direction_key="s")
     
+    ACFG.move("d", 0.5, raw=True)
+    ACFG.move("s", 0.3, raw=True)
+    
+    ACFG.leap(forward_time=0.3, jump_time=0.3, direction_key="s")
+    ACFG.move("d", 0.2, raw=True)
+    ACFG.move("s", 0.275, raw=True)
+    ACFG.leap(forward_time=0.625, jump_time=0.5, direction_key="s")
+    ACFG.leap(forward_time=1, jump_time=0.2, direction_key="d", jump_delay=0.35)
+    ACFG.move("s", 0.225, raw=True)
+    ACFG.leap(forward_time=0.8, jump_time=0.4, direction_key="d", jump_delay=0.3)
+    ACFG.use()
+    sleep(5)
+    ACFG.move("w", 1.8, raw=True)
+    ACFG.move("d", 0.125, raw=True)
+    ACFG.move("w", 2.275, raw=True)
+    ACFG.look("right",  0.375, raw=True)
+    ACFG.move("s", 0.075, raw=True)
+    ACFG.move("d", 0.06, raw=True)    
+    
+    log_process("")
+    log("")
+
+
+def main_to_treehouse():
+    log_process("AutoNav")
+    log("Main -> Funky Treehouse")
+    ACFG.move("a", 1.5, raw=True)
+    ACFG.move("w", 3, raw=True)
+    ACFG.move("a", 1, raw=True)
+    ACFG.move("w", 1.5, raw=True)
+    ACFG.move("a", 1.1, raw=True)
+    ACFG.move("s", 1, raw=True)
+    ACFG.leap(forward_time=1, jump_time=1, direction_key="s")
+    ACFG.move("s", 0.5, raw=True)
+    ACFG.move("d", 0.5, raw=True)
+    ACFG.move("w", 0.3, raw=True)
+    ACFG.move("d", 0.2, raw=True)
+    ACFG.leap(forward_time=0.305, jump_time=0.3, direction_key="w")
+    ACFG.move("d", 0.2, raw=True)
+    ACFG.leap(forward_time=0.6, jump_time=0.3, direction_key="s", jump_delay=0.15)
+    
+    ACFG.move("w", 0.125, raw=True)
+    ACFG.leap(forward_time=0.2, jump_time=0.3, direction_key="d", jump_delay=0.1)
+    ACFG.move("d", 0.125, raw=True)
+    ACFG.leap(forward_time=0.2, jump_time=0.3, direction_key="d")
+    ACFG.move("s", 0.5, raw=True)
+    ACFG.leap(forward_time=0.2, jump_time=0.2, direction_key="s")
+    ACFG.move("a", 0.1, raw=True)
+    ACFG.move("s", 0.15, raw=True)
+    ACFG.move("a", 0.8, raw=True)
+    ACFG.move("w", 0.125, raw=True)
+    ACFG.leap(forward_time=0.3, jump_time=0.15, direction_key="d")
+    ACFG.move("d", 1.5, raw=True)
+    ACFG.move("w", 0.5, raw=True)
+    ACFG.move("a", 0.5, raw=True)
+    
+    ACFG.move("s", 0.41, raw=True)
+    ACFG.move("d", 0.55, raw=True)
+    ACFG.leap(forward_time=0.4, jump_time=0.75, direction_key="a")
+    ACFG.leap(forward_time=0.2, jump_time=0.3, direction_key="d", jump_delay=0.1)
+
+    ACFG.move("s", 0.075, raw=True)
+    ACFG.move("a", 0.05, raw=True)   
+
 
 if __name__ == "__main__":
     ACFG.initalize_serial_interface(do_log=True)
