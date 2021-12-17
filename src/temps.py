@@ -1,18 +1,26 @@
-from utilities import run_as_admin
-
-
 from time import sleep
-from utilities import output_log
-from os import path
-from config import RESOURCES_PATH
-import psutil  # pip3.9 install psutil
-# noinspection PyPackageRequirements
-import clr  # pip3.9 install wheel; pip3.9 install pythonnet
 
-clr.AddReference(path.join(RESOURCES_PATH, "OpenHardwareMonitorLib.dll"))
-# noinspection PyUnresolvedReferences
-import OpenHardwareMonitor.Hardware  # Ignore "No module found named...", is imported dynamically by above line
+import clr
+import psutil
+from System.IO import FileNotFoundException  # type: ignore
+
+from config import CFG
+from utilities import output_log, run_as_admin
+
+OPEN_HARDWARE_MONITOR_PATH = str(CFG.resources_path / "OpenHardwareMonitorLib.dll")
+try:
+    clr.AddReference(OPEN_HARDWARE_MONITOR_PATH)
+except FileNotFoundException:
+    raise Exception(
+        "OpenHardwareMonitorLib.dll not found! Are you sure you're running from the directory this python script is in?"
+        f"\n({OPEN_HARDWARE_MONITOR_PATH})"
+    )
+# Ignore "Import "OpenHardwareMonitor.Hardware" could not be resolved", is imported dynamically by above line
+# Ignore "module level import not at top of file", is impossible to be before clr.AddReference
+import OpenHardwareMonitor.Hardware  # type: ignore # noqa: E402
+
 run_as_admin()
+
 
 def get_temps(computer):
     cpu_temp = -1

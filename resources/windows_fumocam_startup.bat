@@ -9,10 +9,10 @@ start /wait initialize_serial.py
 echo [System Reboot Detected]> ..\output\main_process.txt
 echo Please wait. Initializing core systems. (1/3)> ..\output\main_status.txt
 TIMEOUT /T 5
-start temps.py
+start poetry run python temps.py
 echo [System Reboot Detected]> ..\output\main_process.txt
 echo Please wait. Initializing core systems. (2/3)> ..\output\main_status.txt
 TIMEOUT /T 10
-start main.py
+start poetry run python main.py
 
 
