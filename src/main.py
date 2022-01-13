@@ -1,4 +1,5 @@
 from asyncio import sleep as async_sleep
+from subprocess import check_output  # nosec
 from time import sleep
 from traceback import format_exc
 
@@ -115,6 +116,14 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
             await handle_join_new_server(crash=True)
             remove_duplicates = True
         elif action.name == "handle_join_new_server":
+            if await check_active():
+                msg = f"[There is a server with >{CFG.player_difference_to_switch} more players!]"
+                await send_chat(msg)
+                await async_sleep(len(msg) * CFG.chat_name_sleep_factor)
+                msg = "[Sorry, I have to switch! Hope to see you there!]"
+                await send_chat(msg)
+                await async_sleep(len(msg) * CFG.chat_name_sleep_factor)
+                await async_sleep(5)
             await handle_join_new_server()
             remove_duplicates = True
         elif action.name == "jump":
@@ -208,8 +217,15 @@ async def add_action_queue(item: ActionQueueItem):
     await do_process_queue()
 
 
+async def update_version():
+    git_version = check_output(["git", "rev-list", "--count", "HEAD"])  # nosec
+    version_string = git_version.decode().split("\n")[0]
+    output_log("version", f"v{version_string}")
+
+
 async def async_main():
     print("[Async_Main] Start")
+    await update_version()
     await CFG.add_action_queue(ActionQueueItem("mute", {"set_muted": False}))
 
 

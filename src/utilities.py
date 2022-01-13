@@ -7,7 +7,8 @@ from traceback import format_exc
 from typing import Dict, Union
 
 from mss import mss
-from numpy import ndarray
+from mss import tools as mss_tools
+from mss.screenshot import ScreenShot
 from psutil import process_iter
 from pydirectinput import press as press_key
 from pygetwindow import getActiveWindow, getAllWindows
@@ -118,7 +119,7 @@ async def take_screenshot() -> str:
     return file_name
 
 
-async def take_screenshot_binary(monitor: Union[Dict, None] = None) -> ndarray:
+async def take_screenshot_binary(monitor: Union[Dict, None] = None) -> ScreenShot:
     if monitor is None:
         monitor = CFG.screen_res["mss_monitor"].copy()
     with mss() as sct:
@@ -126,7 +127,7 @@ async def take_screenshot_binary(monitor: Union[Dict, None] = None) -> ndarray:
     return screenshot
 
 
-def take_screenshot_binary_blocking(monitor: Union[Dict, None] = None) -> ndarray:
+def take_screenshot_binary_blocking(monitor: Union[Dict, None] = None) -> ScreenShot:
     if monitor is None:
         monitor = CFG.screen_res["mss_monitor"].copy()
     with mss() as sct:
@@ -146,7 +147,7 @@ def kill_process(executable: str = "RobloxPlayerBeta.exe", force: bool = False):
 
 async def check_active(
     title: str = "Roblox", title_ending: str = None, force_fullscreen: bool = True
-):
+) -> bool:
     print(f"[check_active] {title} | {title_ending}")
     active_window = getActiveWindow()
     if active_window is not None:
@@ -167,7 +168,7 @@ async def check_active(
                     await async_sleep(0.3)
                 await check_active(title)
             print(f"{active_window.title} already active")
-            return
+            return True
     for window in getAllWindows():
         title_active = title_ending is None and window.title == title
         title_ending_active = title_ending is not None and window.title.endswith(
@@ -209,11 +210,12 @@ async def check_active(
                     press_key("f11")
                     print("Maximizing window with F11")
                 await check_active(title)
+            return True
+    return False
 
 
-def notify_admin(
-    message: str,
-) -> bool:  # TODO: Make !dev a seperate, always-running process
+def notify_admin(message: str) -> bool:
+    # TODO: Make !dev a seperate, always-running process
     webhook_url = os.getenv("DISCORD_WEBHOOK_DEV_CHANNEL", None)
     if webhook_url is None:
         return False
@@ -228,6 +230,25 @@ def notify_admin(
         print(err)
     else:
         print(f"[Dev Notified] {message}")
+
+    try:
+        filename = f"{time()}.png"
+        screenshot = take_screenshot_binary_blocking()
+        if screenshot is not None:
+            screenshot_binary = mss_tools.to_png(screenshot.rgb, screenshot.size)
+            post(
+                webhook_url,
+                files={f"_{filename}": (filename, screenshot_binary)},
+            )
+            try:
+                result.raise_for_status()
+            except HTTPError as error:
+                print(error)
+            else:
+                print(f"[Logged Screenshot] {message}")
+    except Exception:
+        print(format_exc())
+
     return True
 
 
