@@ -128,6 +128,7 @@ class MainBotConfig:
     crashed = False
 
     collisions_disabled = True
+
     current_emote = "/e dance3"
     event_timer_running = False
     epoch_time = 1616817600
@@ -183,11 +184,20 @@ class MainBotConfig:
     settings_menu_image_path = os.path.join(resources_path, "gear.jpg")
     settings_menu_width = 0.3
     settings_menu_grief_text = "Anti-Grief"
+
+    settings_menu_positions = {}
+    settings_menu_positions_path = OBS.output_folder / "settings_menu_positions.json"
+    try:
+        with open(settings_menu_positions_path, "r") as f:
+            settings_menu_positions = json.load(f)
+    except Exception:
+        print(f"{settings_menu_positions_path} malformed or missing")
+
     settings_menu_max_find_attempts = 3
-    settings_menu_find_threshold = 0.70
-    settings_menu_max_click_attempts = 10
+    settings_menu_find_threshold = 0.50
+    settings_menu_max_click_attempts = 2
     settings_menu_button_height = 0.065
-    settings_menu_ocr_max_attempts = 3
+    settings_menu_ocr_max_attempts = 2
 
     sit_button_position = (0.79, 0.89)
     sitting_status = False
