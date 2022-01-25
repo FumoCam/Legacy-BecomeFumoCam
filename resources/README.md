@@ -2,3 +2,6 @@
 
 - ./OpenHardwareMonitorLib.dll
 - ./OpenHardwareMonitorLib.sys
+- ./chromedriver.exe
+- ./SoundVolumeView.exe
+- ./soundtracks/overworld/*.mp3

@@ -1,7 +1,7 @@
 from asyncio import sleep as async_sleep
 from json import loads as json_loads
 from subprocess import check_output  # nosec
-from time import sleep
+from time import sleep, time
 from traceback import format_exc
 
 import pyautogui
@@ -17,6 +17,7 @@ from actions import (
     respawn_character,
     send_chat,
 )
+from chat_ocr import activate_ocr, deactivate_ocr
 from commands import click_backpack_button, click_item, click_sit_button
 from config import ActionQueueItem
 from health import (
@@ -58,12 +59,35 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
             log("")
             log_process("")
             return
+        if CFG.chat_ocr_active:
+            for func_name in CFG.chat_block_functions:
+                if func_name == action.name:
+                    continue
+
+            found_ignore = False
+            for func_name in CFG.chat_ignore_functions:
+                if func_name == action.name:
+                    found_ignore = True
+                    break
+            if not found_ignore:
+                log_process("Deactivating chat A.I")
+                await deactivate_ocr()
+                sleep(1)
+                log_process("")
+        else:
+            if (
+                action.name not in CFG.chat_block_functions
+                or action.name in CFG.chat_ignore_functions
+            ):
+                CFG.chat_last_non_idle_time = time()
+
         if action.name == "anti_afk":
             await do_anti_afk()
         elif action.name == "advert":
             await do_advert()
         elif action.name == "autonav":
             await auto_nav(action.values["location"], slow_spawn_detect=False)
+            CFG.chat_last_non_idle_time = time()
             log_process("")
             log("")
         elif action.name == "backpack_toggle":
@@ -202,6 +226,25 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
             ACFG.use()
             log_process("")
             log("")
+        elif action.name == "activate_ocr":
+            log_process("Activating Chat A.I.")
+            await activate_ocr()
+            CFG.chat_ocr_activation_queued = False
+            log_process("")
+        elif action.name == "ocr_chat":
+            CFG.chat_cleared_after_response = False
+            await send_chat("[A.I. v2]", ocr=True)
+            await async_sleep(0.1)
+
+            for message in action.values["msgs"]:
+                await send_chat(message, ocr=True)
+            await send_chat("/clear", ocr=True)
+
+            output_log("chat_ai_title", "[Chat AI]")
+            output_log("chat_ai_subtitle", "Active")
+
+            CFG.chat_ocr_ready = True
+            CFG.chat_cleared_after_response = True
         else:
             print("queue failed")
         CFG.action_queue.pop(0)
@@ -265,6 +308,8 @@ async def get_updates_log():
 
 async def async_main():
     print("[Async_Main] Start")
+    output_log("chat_ai_title", "")
+    output_log("chat_ai_subtitle", "")
     await update_version()
     await get_updates_log()
     await CFG.add_action_queue(ActionQueueItem("mute", {"set_muted": False}))

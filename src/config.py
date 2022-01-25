@@ -1,11 +1,16 @@
 import json
 import os
+import sqlite3
 from pathlib import Path
+from re import compile as re_compile
+from time import time
 from typing import Dict, List
 
 from dotenv import dotenv_values, load_dotenv
 from mss import mss
 from pyautogui import size as get_monitor_size
+
+# TODO: This is a mess of config vars, utility functions, and statelike variables. Cleanup needed
 
 load_dotenv(".env", verbose=True)
 
@@ -97,6 +102,48 @@ class MainBotConfig:
     browser_cookies_path = browser_profile_path / "browser_cookies.json"
 
     censored_words = [] # Historically redacted
+
+    chat_bracket_like_chars = ["|", "!", "l", "I"]
+    chat_bracket_like_chars_left = chat_bracket_like_chars + ["[", "{", "("]
+    chat_bracket_like_chars_right = chat_bracket_like_chars + ["]", "}", ")"]
+    chat_db = sqlite3.connect(OBS.output_folder / "chat_messages.sqlite")
+    chat_db_cursor = chat_db.cursor()
+    chat_db_tables = [
+        "CREATE TABLE messages(time REAL, time_friendly TEXT, author TEXT, message TEXT, author_confidence REAL)",
+        "CREATE TABLE interactions("
+        "time REAL, time_friendly TEXT, author TEXT, message TEXT, response TEXT, author_confidence REAL)",
+    ]
+    try:
+        for query in chat_db_tables:
+            chat_db_cursor.execute(query)
+    except Exception:  # nosec
+        pass  # TODO: figure out db-exists exception
+
+    chat_block_functions = ["anti_afk"]
+    chat_cleared_after_response = (
+        True  # False when sending OCR messages and haven't send /clear
+    )
+    chat_dimensions = screen_res["mss_monitor"].copy()
+    chat_dimensions["top"] = int(screen_res["height"] * 0.05)
+    chat_dimensions["width"] = int(screen_res["width"] * 0.29)
+    chat_dimensions["height"] = int(screen_res["height"] * 0.22)
+    chat_fuzzy_threshold = (
+        0.80  # Minimum similarity ratio to consider a message as already-captured
+    )
+    chat_idle_time_required = 30  # Seconds with no activity to activate
+    chat_ignore_functions = [
+        "ocr_chat",
+        "check_for_better_server",
+        "activate_ocr",
+    ]
+    chat_last_non_idle_time = time()
+    chat_message_corrections = {"[e": "/e"}
+    chat_messages_in_memory: List[Dict] = []
+    chat_ocr_active = False
+    chat_ocr_activation_queued = False  # True when ocr_active False, but queued
+    chat_ocr_ready = True  # Ready for another OCR loop (False when OCR loop running)
+    chat_start_ocr_time = time()
+
     character_select_image_path = os.path.join(resources_path, "character_select.png")
     character_select_scroll_down_amount = 0
     character_select_scroll_down_scale = -200
@@ -180,6 +227,8 @@ class MainBotConfig:
         "C:\\", "Program Files", "Tesseract-OCR", "tesseract.exe"
     )
     respawn_character_select_offset = -0.1
+
+    regex_alpha = re_compile("[^a-zA-Z]")
 
     settings_menu_image_path = os.path.join(resources_path, "gear.jpg")
     settings_menu_width = 0.3
