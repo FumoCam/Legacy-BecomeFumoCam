@@ -53,11 +53,12 @@ build-backend = "poetry.core.masonry.api"
 [tool.isort]
 src_paths=["src"]
 profile = "black"
+known_first_party="ai.chat_logic"
 
 
 [tool.mypy]
 python_version = "3.9"
 
 [[tool.mypy.overrides]]
-module = ["pytesseract.*", "mss.*", "pyautogui.*", "pydirectinput.*", "pygetwindow.*", "serial.*", "cv2.*", "imutils.*", "twitchio.*", "clr.*", "lxml.*", "Levenshtein.*"]
+module = ["pytesseract.*", "mss.*", "pyautogui.*", "pydirectinput.*", "pygetwindow.*", "serial.*", "cv2.*", "imutils.*", "twitchio.*", "clr.*", "lxml.*", "Levenshtein.*", "ai.*"]
 ignore_missing_imports = true
