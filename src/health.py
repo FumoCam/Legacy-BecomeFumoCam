@@ -7,8 +7,6 @@ from typing import Dict, Tuple, Union
 import cv2 as cv
 import numpy as np
 import pytesseract
-from imutils import rotate_bound
-from pyautogui import ImageNotFoundException, locateCenterOnScreen
 from requests import get
 from selenium import webdriver
 
@@ -28,7 +26,6 @@ from spawn_detection import spawn_detection_main
 from utilities import (
     check_active,
     do_crash_check,
-    error_log,
     is_process_running,
     kill_process,
     log,
@@ -66,7 +63,7 @@ async def check_if_should_change_servers(
     highest_player_server_playing = 0
 
     log("Querying Roblox API for server list")
-    url = f"https://games.roblox.com/v1/games/{CFG.game_id}/servers/Public?sortOrder=Asc&limit=10"
+    url = f"https://games.roblox.com/v1/games/{CFG.game_id}/servers/Public"
     try:
         response = get(url, timeout=10)
     except Exception:
@@ -125,7 +122,7 @@ async def check_if_should_change_servers(
 
 async def get_current_server_id(game_id: int = CFG.game_id) -> str:
     current_server_id = "N/A"
-    url = f"https://games.roblox.com/v1/games/{game_id}/servers/Public?sortOrder=Asc&limit=10"
+    url = f"https://games.roblox.com/v1/games/{game_id}/servers/Public"
     try:
         response = get(url, timeout=10)
     except Exception:
@@ -135,6 +132,7 @@ async def get_current_server_id(game_id: int = CFG.game_id) -> str:
         response_result = response.json()
         servers = response_result["data"]
         if len(servers) == 0:
+            print("No servers found")
             return "ERROR"
         for server in servers:
             if CFG.player_id in server["playerTokens"]:
@@ -290,7 +288,7 @@ async def get_best_server(get_worst: bool = False) -> Dict:
         "ping": 100,
     }
     best_server = server_obj
-    url = f"https://games.roblox.com/v1/games/{CFG.game_id}/servers/Public?sortOrder=Asc&limit=10"
+    url = f"https://games.roblox.com/v1/games/{CFG.game_id}/servers/Public"
     response = get(url, timeout=10)
     if response.status_code == 200:
         response_result = response.json()
@@ -312,18 +310,31 @@ async def get_best_server(get_worst: bool = False) -> Dict:
     return best_server
 
 
+async def check_character_menu(is_open):
+    # Check for either a known character visible on first spawn, or our desired character
+    # One of those two should always be visible on character select between routines
+    print("check_character_menu")
+    open_status_initial = await ocr_for_character(
+        CFG.character_select_initial, click_option=False
+    )
+    print(f"open_status_initial: {open_status_initial}")
+    if open_status_initial != is_open:
+        open_status_other = await ocr_for_character(
+            CFG.character_select_desired, click_option=False
+        )
+        print(f"open_status_other: {open_status_other}")
+        return open_status_other == is_open
+
+    return open_status_initial == is_open
+
+
 async def click_character_select_button(check_open_state: Union[bool, None] = None):
     await async_sleep(0.5)
 
-    character_select_pos = await get_character_select_button_pos()
-    if character_select_pos is None:
-        log("Unable to toggle character menu!\nNotifying dev...")
-        notify_admin(
-            "Failed to find toggle character menu in `click_character_select_button`"
-        )
-        sleep(5)
-        return False
-    button_x, button_y = character_select_pos
+    button_x, button_y = (
+        CFG.character_select_button_position["x"],
+        CFG.character_select_button_position["y"],
+    )
 
     ACFG.moveMouseAbsolute(x=button_x, y=button_y)
     ACFG.left_click()
@@ -333,80 +344,49 @@ async def click_character_select_button(check_open_state: Union[bool, None] = No
             f"Checking that character select is {'open' if check_open_state else 'closed'}"
         )
         await async_sleep(2)
-        _, last_button_y = button_x, button_y
         success = False
-        for attempt in range(CFG.character_select_max_close_attempts):
-            new_character_select_pos = await get_character_select_button_pos()
-            if new_character_select_pos is None:
-                attempts = f"{attempt}/{CFG.character_select_max_close_attempts}"
-                log(f"Unable to toggle character menu ({attempts})!\nNotifying dev...")
-                notify_admin(
-                    "Failed to find toggle character menu in `click_character_select_button` loop"
-                )
-                sleep(5)
-                continue
-
-            new_button_x, new_button_y = new_character_select_pos
-            if check_open_state is True and (new_button_y > last_button_y):
+        for _ in range(CFG.character_select_max_close_attempts):
+            if await check_character_menu(check_open_state):
                 success = True
-                break  # If we want it open and the new pos is further down the screen than before
-            elif check_open_state is False and (new_button_y < last_button_y):
-                success = True
-                break  # If we want it closed and the new pos is further up the screen than before
-
-            ACFG.moveMouseAbsolute(x=int(new_button_x), y=int(new_button_y))
-            ACFG.left_click()
-            await async_sleep(2)
-            _, last_button_y = new_button_x, new_button_y
+                break
+            else:
+                ACFG.moveMouseAbsolute(x=button_x, y=button_y)
+                ACFG.left_click()
 
         if not success:
-            log("Unable to toggle character menu!")
+            log("Unable to toggle character menu!\nNotifying dev...")
+            notify_admin(
+                "Failed to find toggle character menu in `click_character_select_button` loop"
+            )
             sleep(2)
         log("")
     else:
         await async_sleep(0.5)
 
 
-async def ocr_for_character(character: str = "") -> bool:
+async def ocr_for_character(character: str = "", click_option: bool = True) -> bool:
     desired_character = (
         CFG.character_select_desired.lower() if not character else character.lower()
     )
 
-    character_select_pos = await get_character_select_button_pos()
-    if character_select_pos is None:
-        log("Unable to toggle character menu!\nNotifying dev...")
-        notify_admin("Failed to find toggle character menu in `ocr_for_character`")
-        sleep(5)
-        return False
-    button_x, button_y = character_select_pos
-
     await async_sleep(0.5)
 
-    monitor = CFG.screen_res["mss_monitor"].copy()
-    screen_width = monitor["width"]
-    screen_height = monitor["height"]
-    monitor["width"] = int(CFG.character_select_width * screen_width)
-    monitor["left"] = int(button_x - (CFG.character_select_width / 2) * screen_width)
-    monitor["height"] = int(
-        button_y - (CFG.character_select_button_height * screen_height)
-    )
     ocr_data = {}
     last_ocr_text = None
     times_no_movement = 0
     found_character = False
     scroll_amount = 0
     for attempts in range(CFG.character_select_max_scroll_attempts):
-        log(
-            f"Scanning list for '{desired_character.capitalize()}'"
-            f" ({attempts}/{CFG.character_select_max_scroll_attempts})"
-        )
+        if click_option:
+            log(
+                f"Scanning list for '{desired_character.capitalize()}'"
+                f" ({attempts}/{CFG.character_select_max_scroll_attempts})"
+            )
         for _ in range(CFG.character_select_scan_attempts):  # Attempt multiple OCRs
-            screenshot = np.array(await take_screenshot_binary(monitor))
+            screenshot = np.array(await take_screenshot_binary(CFG.window_character))
 
             gray = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)
-            gray, img_bin = cv.threshold(
-                gray, 100, 255, cv.THRESH_BINARY | cv.THRESH_OTSU
-            )
+            gray, img_bin = cv.threshold(gray, 240, 255, cv.THRESH_BINARY)
             gray = cv.bitwise_not(img_bin)
             kernel = np.ones((2, 1), np.uint8)
             img = cv.erode(gray, kernel, iterations=1)
@@ -417,13 +397,19 @@ async def ocr_for_character(character: str = "") -> bool:
             )
             ocr_data["text"] = [word.lower() for word in ocr_data["text"]]
             print(ocr_data["text"])
-            if desired_character in ocr_data["text"]:
-                found_character = True
-                break
+            for entry in ocr_data["text"]:
+                if desired_character in entry:
+                    if click_option:
+                        found_character = True
+                        break
+                    else:
+                        return True
             sleep(0.1)
 
-        if found_character:
+        if click_option and found_character:
             break
+        elif not click_option and not found_character:
+            return False  # Do not scroll
 
         if last_ocr_text == ocr_data["text"]:
             times_no_movement += 1
@@ -439,9 +425,12 @@ async def ocr_for_character(character: str = "") -> bool:
         sleep(0.4)
 
     if not found_character:
-        log(f"Failed to find '{desired_character.capitalize()}'.\n Notifying Dev...")
-        notify_admin(f"Failed to find `{desired_character}`")
-        sleep(5)
+        if click_option:
+            log(
+                f"Failed to find '{desired_character.capitalize()}'.\n Notifying Dev..."
+            )
+            notify_admin(f"Failed to find `{desired_character}`")
+            sleep(5)
         return False
 
     # We found the character, lets click it
@@ -449,6 +438,7 @@ async def ocr_for_character(character: str = "") -> bool:
     desired_character_height = int(
         ocr_data["top"][ocr_index] + (ocr_data["height"][ocr_index] / 2)
     )
+    desired_character_height += CFG.window_character["top"]
     with open(OBS.output_folder / "character_select.json", "w") as f:
         json.dump(
             {
@@ -457,22 +447,17 @@ async def ocr_for_character(character: str = "") -> bool:
             },
             f,
         )
-    CFG.character_select_screen_height_to_click = (
-        desired_character_height / CFG.screen_res["height"]
-    )
+
+    CFG.character_select_screen_height_to_click = desired_character_height
+
     CFG.character_select_scroll_down_amount = scroll_amount
-    ACFG.moveMouseAbsolute(x=int(button_x), y=int(desired_character_height))
+    ACFG.moveMouseAbsolute(
+        x=CFG.screen_res["center_x"], y=int(desired_character_height)
+    )
     sleep(0.5)
     ACFG.left_click()
     sleep(0.5)
     return True
-
-
-async def scroll_to_character_in_menu():
-    await async_sleep(0.5)
-    log(f"Scrolling down {CFG.character_select_scroll_down_amount} times")
-    ACFG.scrollMouse(CFG.character_select_scroll_down_amount, down=True)
-    log("")
 
 
 async def click_character_in_menu(click_random: bool = False):
@@ -480,29 +465,16 @@ async def click_character_in_menu(click_random: bool = False):
         CFG.character_select_desired if not click_random else "a random character"
     )
     log(f"Clicking {character_name}")
-    button_x, button_y = round(CFG.screen_res["width"] * 0.5), round(
-        CFG.screen_res["height"] * CFG.character_select_screen_height_to_click
-    )  # Toggle Collisions button
+
+    button_x, button_y = (
+        round(CFG.screen_res["width"] * 0.5),
+        CFG.character_select_screen_height_to_click,
+    )
     if click_random:
-        button_y += int(CFG.screen_res["height"] * CFG.respawn_character_select_offset)
+        button_y -= int(CFG.screen_res["height"] * CFG.respawn_character_select_offset)
     ACFG.moveMouseAbsolute(x=button_x, y=button_y)
     ACFG.left_click()
     await async_sleep(0.5)
-
-
-async def get_character_select_button_pos() -> Union[Tuple[int, int], None]:
-    character_select_button = None
-    for _ in range(CFG.max_attempts_character_selection):
-        await check_active()
-        try:
-            character_select_button = locateCenterOnScreen(
-                CFG.character_select_image_path, grayscale=True, confidence=0.9
-            )
-            break
-        except ImageNotFoundException:
-            character_select_button = None
-            await async_sleep(1)
-    return character_select_button
 
 
 async def change_characters(respawn: bool = False):
@@ -526,6 +498,12 @@ async def change_characters(respawn: bool = False):
         await async_sleep(respawn_delay)
         await click_character_in_menu()
     else:
+        print("Beginning scroll")
+        ACFG.moveMouseAbsolute(
+            x=int(CFG.character_select_scroll_position["x"]),
+            y=int(CFG.character_select_scroll_position["y"]),
+        )
+        ACFG.mouse_alt_tab()
         await ocr_for_character()
     sleep(1)
     await async_sleep(1)  # I have no idea what causes less errors
@@ -540,12 +518,27 @@ async def change_characters(respawn: bool = False):
         ACFG.zoom("i", CFG.zoom_out_ui_cv)
 
 
+async def check_ui_loaded():
+    screenshot = np.array(await take_screenshot_binary(CFG.window_ui_loaded))
+    screenshot = cv.cvtColor(screenshot, cv.COLOR_RGBA2RGB)
+
+    color_threshold = cv.inRange(screenshot, (236, 235, 253), (255, 255, 255))
+    screenshot[color_threshold > 0] = (255, 255, 255)
+
+    white_pixels = np.sum(screenshot == 255)
+    non_white_pixels = np.sum(screenshot != 255)
+    total_pixels = white_pixels + non_white_pixels
+    percentage = white_pixels / total_pixels
+    ui_loaded = percentage > 0.7
+    return ui_loaded
+
+
 async def check_if_game_loaded() -> bool:
     game_loaded = False
     log("Loading into game")
 
     for attempt in range(CFG.max_attempts_game_loaded):
-        if await get_character_select_button_pos() is not None:
+        if await check_ui_loaded():
             game_loaded = True
             break
         log(f"Loading into game (Check #{attempt}/{CFG.max_attempts_game_loaded})")
@@ -662,103 +655,23 @@ async def auto_nav(
     await async_sleep(3)
 
 
-async def get_settings_button_pos(only_once=False) -> Union[None, Tuple[int, int]]:
-    monitor = CFG.screen_res["mss_monitor"].copy()
-    screen_width = monitor["width"]
-    monitor["width"] = int(CFG.character_select_width * screen_width)
-    monitor["left"] = int(
-        (screen_width / 2) - (CFG.character_select_width / 2) * screen_width
+async def check_settings_menu(is_open):
+    open_status = await ocr_for_settings(
+        CFG.settings_menu_grief_text, click_option=False
     )
-
-    button_img = cv.imread(CFG.settings_menu_image_path, cv.IMREAD_UNCHANGED)
-    button_img = cv.cvtColor(button_img, cv.COLOR_BGR2GRAY)
-    _, button_img = cv.threshold(button_img, 211, 255, 3)
-
-    for __ in range(CFG.settings_menu_max_find_attempts):
-        screenshot = np.array(await take_screenshot_binary(monitor))
-        screenshot = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)
-        _, screenshot = cv.threshold(screenshot, 211, 255, 3)
-
-        match_max_val = 0
-        match_top_left = (0, 0)
-        match_bottom_right = (0, 0)
-
-        for rotation_degrees in range(360):
-            rotated_button = rotate_bound(button_img, rotation_degrees)
-            result = cv.matchTemplate(screenshot, rotated_button, cv.TM_CCOEFF_NORMED)
-            _, max_val, _, max_loc = cv.minMaxLoc(result)
-            if match_max_val < max_val:
-                button_w = button_img.shape[1]
-                button_h = button_img.shape[0]
-                top_left = max_loc
-                bottom_right = (top_left[0] + button_w, top_left[1] + button_h)
-                match_max_val = max_val
-                match_top_left = top_left
-                match_bottom_right = bottom_right
-                # No break; getting highest confidence rotation reduces false positives
-
-        if match_max_val >= CFG.settings_menu_find_threshold:
-            break
-        if only_once:
-            break
-        await async_sleep(1)
-
-    try:
-        right = match_bottom_right[0]
-        left = match_top_left[0]
-        width = max(right, left) - min(right, left)
-        center_x = int(monitor["left"]) + int(left + (width / 2))
-
-        bottom = match_bottom_right[1]
-        top = match_top_left[1]
-        height = max(top, bottom) - min(top, bottom)
-        center_y = int(top + (height / 2))
-
-        if match_max_val >= CFG.settings_menu_find_threshold:
-            print(f"Found gear icon. ({round(match_max_val*100,2)}%)")
-            log("")
-            return center_x, center_y
-        else:
-            if only_once:
-                return None
-            error_msg = (
-                "Could not find gear icon!\n"
-                f"(Best match {round(match_max_val*100,2)}% confidence)\n({center_x}, {center_y}"
-            )
-            log(error_msg)
-            notify_admin(error_msg)
-            await async_sleep(5)
-            log("")
-            return None
-    except Exception:
-        error_log(format_exc())
-        log("Could not find gear icon! (Error)")
-        return None
+    return open_status == is_open
 
 
 async def click_settings_button(check_open_state: Union[bool, None] = None) -> bool:
     await async_sleep(0.5)
 
-    settings_button_pos = await get_settings_button_pos()
-    if settings_button_pos is None:
-        if check_open_state is not None:
-            # invert, we want to click the opposite first to acheive the desired state
-            desired_pos_name = f"settings_{'closed' if check_open_state else 'opened'}"
-            desired_pos = CFG.settings_menu_positions.get(desired_pos_name)
-            if desired_pos is None:
-                return False
+    # Bottom center of screen
+    button_x, button_y = (
+        CFG.settings_button_position["x"],
+        CFG.settings_button_position["y"],
+    )
 
-            log(
-                "Couldn't find the gear icon visually.\n"
-                f"Using last positon for {'closed' if check_open_state else 'opened'} menu."
-            )
-            button_x, button_y = desired_pos["x"], desired_pos["y"]
-        else:
-            return False  # We can't verify where to click if we don't know what state we want it in
-    else:
-        button_x, button_y = settings_button_pos
-
-    ACFG.moveMouseAbsolute(x=int(button_x), y=int(button_y))
+    ACFG.moveMouseAbsolute(x=button_x, y=button_y)
     ACFG.left_click()
 
     if check_open_state is not None:
@@ -766,52 +679,19 @@ async def click_settings_button(check_open_state: Union[bool, None] = None) -> b
             f"Checking that settings menu is {'open' if check_open_state else 'closed'}"
         )
         await async_sleep(2)
-        _, last_button_y = button_x, button_y
         success = False
         for i in range(CFG.settings_menu_max_click_attempts):
-
-            new_settings_button_pos = await get_settings_button_pos()
-
-            if new_settings_button_pos is None:
-                log(
-                    f"Findng gear icon\nAttempt #{i+1}/{CFG.settings_menu_max_click_attempts}"
-                )
-                continue
-            new_button_x, new_button_y = new_settings_button_pos
-
-            if check_open_state is True and (
-                int(new_button_y / 2) < int(last_button_y / 2)
-            ):
+            settings_menu_at_desired = await check_settings_menu(check_open_state)
+            if settings_menu_at_desired:
                 success = True
-                CFG.settings_menu_positions["settings_opened"] = {
-                    "x": int(new_button_x),
-                    "y": int(new_button_y),
-                }
-                with open(CFG.settings_menu_positions_path, "w") as f:
-                    json.dump(CFG.settings_menu_positions, f)
-                break  # If we want it open and the new pos is further up the screen than before
-            elif check_open_state is False and (
-                int(new_button_y / 2) > int(last_button_y / 2)
-            ):
-                CFG.settings_menu_positions["settings_closed"] = {
-                    "x": int(new_button_x),
-                    "y": int(new_button_y),
-                }
-                with open(CFG.settings_menu_positions_path, "w") as f:
-                    json.dump(CFG.settings_menu_positions, f)
-                success = True
-                break  # If we want it closed and the new pos is further down the screen than before
+                break
             else:
-                ACFG.moveMouseAbsolute(x=int(new_button_x), y=int(new_button_y))
+                ACFG.moveMouseAbsolute(x=button_x, y=button_y)
                 ACFG.left_click()
                 await async_sleep(2)
-                _, last_button_y = new_button_x, new_button_y
 
         if not success:
-            if settings_button_pos is None:
-                log("Still could not find gear icon, hopefully worked anyway!")
-            else:
-                log("Unable to toggle settings menu!")
+            log("Unable to toggle settings menu!")
             await async_sleep(2)
         log("")
     else:
@@ -819,42 +699,22 @@ async def click_settings_button(check_open_state: Union[bool, None] = None) -> b
     return True
 
 
-async def ocr_for_settings(option: str = "") -> bool:
+async def ocr_for_settings(option: str = "", click_option: bool = True) -> bool:
     desired_option = (CFG.settings_menu_grief_text if not option else option).lower()
-
-    settings_button_pos = await get_settings_button_pos(only_once=True)
-    if settings_button_pos is None:
-        pos = CFG.settings_menu_positions.get("settings_opened")
-        if pos is None:
-            return False
-        else:
-            button_x, button_y = int(pos["x"]), int(pos["y"])
-            print(button_x)
-            print(button_y)
-    else:
-        button_x, button_y = settings_button_pos
-
-    monitor = CFG.screen_res["mss_monitor"].copy()
-    screen_width = monitor["width"]
-    screen_height = monitor["height"]
-    print(screen_width)
-    monitor["width"] = int(CFG.settings_menu_width * screen_width)
-    monitor["left"] = int(button_x - (CFG.settings_menu_width / 2) * screen_width)
-    height_offset = int(button_y + (CFG.settings_menu_button_height * screen_height))
-    monitor["top"] = height_offset
-    monitor["height"] = monitor["height"] - height_offset
+    desired_label = (CFG.settings_menu_grief_label if not option else option).lower()
 
     ocr_data = {}
     found_option = False
     for attempts in range(CFG.settings_menu_ocr_max_attempts):  # Attempt multiple OCRs
-        log(
-            f"Finding '{desired_option.capitalize()}' (Attempt #{attempts}/{CFG.settings_menu_ocr_max_attempts})"
-        )
-        screenshot = np.array(await take_screenshot_binary(monitor))
+        if not click_option:
+            log(
+                f"Finding '{desired_label.capitalize()}' (Attempt #{attempts}/{CFG.settings_menu_ocr_max_attempts})"
+            )
+        screenshot = np.array(await take_screenshot_binary(CFG.window_settings))
 
         menu_green = {
             "upper_bgra": np.array([212, 255, 158, 255]),
-            "lower_bgra": np.array([74, 92, 69, 255]),
+            "lower_bgra": np.array([163, 196, 133, 255]),
         }
         green_mask = cv.inRange(
             screenshot, menu_green["lower_bgra"], menu_green["upper_bgra"]
@@ -862,8 +722,8 @@ async def ocr_for_settings(option: str = "") -> bool:
         screenshot[green_mask > 0] = (255, 255, 255, 255)
 
         menu_red = {
-            "upper_bgra": np.array([85, 85, 255, 255]),
-            "lower_bgra": np.array([45, 50, 120, 255]),
+            "upper_bgra": np.array([79, 79, 255, 255]),
+            "lower_bgra": np.array([63, 63, 214, 255]),
         }
         red_mask = cv.inRange(
             screenshot, menu_red["lower_bgra"], menu_red["upper_bgra"]
@@ -871,10 +731,10 @@ async def ocr_for_settings(option: str = "") -> bool:
         screenshot[red_mask > 0] = (255, 255, 255, 255)
 
         gray = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)  # PyTesseract
-        gray, img_bin = cv.threshold(gray, 100, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)
-        gray = cv.bitwise_not(img_bin)
+        _, thresh = cv.threshold(gray, 240, 255, cv.THRESH_BINARY)
+        thresh_not = cv.bitwise_not(thresh)
         kernel = np.ones((2, 1), np.uint8)
-        img = cv.erode(gray, kernel, iterations=1)
+        img = cv.erode(thresh_not, kernel, iterations=1)
         img = cv.dilate(img, kernel, iterations=1)
 
         ocr_data = pytesseract.image_to_data(
@@ -882,40 +742,42 @@ async def ocr_for_settings(option: str = "") -> bool:
         )
         ocr_data["text"] = [word.lower() for word in ocr_data["text"]]
         print(ocr_data["text"])
-        if desired_option in ocr_data["text"]:
-            log("Found option, clicking")
-            found_option = True
-            break
+        for entry in ocr_data["text"]:
+            if desired_option in entry:
+                desired_option = entry
+                if click_option:
+                    log("Found option, clicking")
+                    found_option = True
+                    break
+                else:
+                    return True
         await async_sleep(0.25)
 
     if not found_option:
-        log(f"Failed to find '{desired_option.capitalize()}'.\n Notifying Dev...")
-        notify_admin(f"Failed to find `{desired_option}`")
-        if desired_option in CFG.settings_menu_positions:
-            log(
-                f"Failed to find '{desired_option.capitalize()}'.\n Using last known position..."
-            )
-            desired_option_height = CFG.settings_menu_positions[desired_option]["y"]
-        else:
+        if click_option:
+            log(f"Failed to find '{desired_label.capitalize()}'.\n Notifying Dev...")
+            notify_admin(f"Failed to find `{desired_option}`")
             await async_sleep(5)
-            return False
+        return False
     else:
         # We found the option
+        print(ocr_data)
         ocr_index = ocr_data["text"].index(desired_option)
 
         option_top = ocr_data["top"][ocr_index]
-        option_half = ocr_data["height"][ocr_index] / 2
-        desired_option_height = int(option_top + option_half + height_offset)
+        option_y_center = ocr_data["height"][ocr_index] / 2
+        option_y_pos = option_top + option_y_center
+        # The top-offset of our capture window + the found pos of the option
+        desired_option_y = int(CFG.window_settings["top"] + option_y_pos)
 
-        CFG.settings_menu_positions[desired_option] = {
-            "x": int(button_x),
-            "y": int(desired_option_height),
-        }
-        with open(CFG.settings_menu_positions_path, "w") as f:
-            json.dump(CFG.settings_menu_positions, f)
+        option_left = ocr_data["left"][ocr_index]
+        option_x_center = ocr_data["width"][ocr_index] / 2
+        option_x_pos = option_left + option_x_center
+        # The left-offset of our capture window + the found pos of the option
+        desired_option_x = int(CFG.window_settings["left"] + option_x_pos)
 
     # Click the option
-    ACFG.moveMouseAbsolute(x=int(button_x), y=int(desired_option_height))
+    ACFG.moveMouseAbsolute(x=int(desired_option_x), y=int(desired_option_y))
     await async_sleep(0.5)
     ACFG.left_click()
     await async_sleep(0.5)
@@ -943,7 +805,7 @@ async def toggle_collisions() -> bool:
             ACFG.zoom("i", CFG.zoom_out_ui_cv)
         return False
 
-    log(f"Finding {CFG.settings_menu_grief_text} option")
+    log(f"Finding {CFG.settings_menu_grief_label} option")
     await async_sleep(1)
     if not await ocr_for_settings():
         notify_admin("Failed to click settings option")

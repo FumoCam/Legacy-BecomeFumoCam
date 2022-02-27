@@ -144,12 +144,17 @@ class MainBotConfig:
     chat_ocr_ready = True  # Ready for another OCR loop (False when OCR loop running)
     chat_start_ocr_time = time()
 
-    character_select_image_path = os.path.join(resources_path, "character_select.png")
+    character_select_button_position = {"x": screen_res["center_x"], "y": 40}
+    character_select_scroll_position = {
+        "x": screen_res["center_x"],
+        "y": screen_res["center_y"],
+    }
     character_select_scroll_down_amount = 0
     character_select_scroll_down_scale = -200
     character_select_screen_height_to_click = 0
     character_select_scroll_speed = 0.2
 
+    character_select_initial = "Alice"
     character_select_desired = "Momiji"
     character_select_width = 0.28
     character_select_button_height = 0.035
@@ -161,9 +166,9 @@ class MainBotConfig:
     try:
         with open(OBS.output_folder / "character_select.json", "r") as f:
             prev_char_select = json.load(f)
-        character_select_screen_height_to_click = (
-            prev_char_select["desired_character_height"] / screen_res["height"]
-        )
+        character_select_screen_height_to_click = prev_char_select[
+            "desired_character_height"
+        ]
         character_select_scroll_down_amount = prev_char_select["scroll_amount"]
     except Exception:
         print(f"{OBS.output_folder / 'character_select.json'} malformed or missing")
@@ -195,7 +200,7 @@ class MainBotConfig:
 
     max_attempts_better_server = 20
     max_attempts_character_selection = 30
-    max_attempts_game_loaded = 20
+    max_attempts_game_loaded = 50
     max_attempts_sit_button = 3
     max_seconds_browser_launch = 20
 
@@ -226,13 +231,14 @@ class MainBotConfig:
     pytesseract_path = os.path.join(
         "C:\\", "Program Files", "Tesseract-OCR", "tesseract.exe"
     )
-    respawn_character_select_offset = -0.1
+    respawn_character_select_offset = 0.1
 
     regex_alpha = re_compile("[^a-zA-Z]")
 
     settings_menu_image_path = os.path.join(resources_path, "gear.jpg")
     settings_menu_width = 0.3
-    settings_menu_grief_text = "Anti-Grief"
+    settings_menu_grief_text = "grief"
+    settings_menu_grief_label = "Anti-Grief"
 
     settings_menu_positions = {}
     settings_menu_positions_path = OBS.output_folder / "settings_menu_positions.json"
@@ -242,6 +248,10 @@ class MainBotConfig:
     except Exception:
         print(f"{settings_menu_positions_path} malformed or missing")
 
+    settings_button_position = {
+        "x": screen_res["center_x"],
+        "y": screen_res["height"] - 40,
+    }
     settings_menu_max_find_attempts = 3
     settings_menu_find_threshold = 0.50
     settings_menu_max_click_attempts = 2
@@ -275,6 +285,45 @@ class MainBotConfig:
     vlc_executable_name = "vlc.exe"
 
     vip_twitch_names = [] # Historically redacted
+
+    # Window area for settings menu
+    window_settings = screen_res["mss_monitor"].copy()
+    window_settings_horizontal_offset = int(0.13 * screen_res["width"])
+    window_settings["left"] += window_settings_horizontal_offset
+    window_settings["width"] -= window_settings_horizontal_offset * 2
+    window_settings_vertical_offset = int(0.15 * screen_res["height"])
+    window_settings["top"] += window_settings_vertical_offset
+    window_settings["height"] -= window_settings_vertical_offset * 2
+
+    # Window area for character select
+    window_character = screen_res["mss_monitor"].copy()
+    window_character_horizontal_offset = int(0.33 * screen_res["width"])
+    window_character["left"] += window_character_horizontal_offset
+    window_character["width"] -= window_character_horizontal_offset * 2
+    window_character_top_offset = int(0.31 * screen_res["height"])
+    window_character["top"] += window_character_top_offset
+    window_character_bottom_offset = int(0.14 * screen_res["height"])
+    window_character["height"] -= (
+        window_character_top_offset + window_character_bottom_offset
+    )
+
+    # Window area for backpack
+    window_backpack = screen_res["mss_monitor"].copy()
+    window_backpack_horizontal_offset = int(0.14 * screen_res["width"])
+    window_backpack["left"] += window_backpack_horizontal_offset
+    window_backpack["width"] -= window_backpack_horizontal_offset * 2
+    window_backpack_vertical_offset = int(0.137 * screen_res["height"])
+    window_backpack["top"] += window_backpack_vertical_offset
+    window_backpack["height"] -= window_backpack_vertical_offset * 2
+
+    # Window area for white pixels on UI element to indicate fully loaded
+    window_ui_loaded = screen_res["mss_monitor"].copy()
+    window_ui_loaded_horizontal_offset = int(screen_res["center_x"]) - 5
+    window_ui_loaded["left"] += window_ui_loaded_horizontal_offset
+    window_ui_loaded["width"] -= window_ui_loaded_horizontal_offset * 2
+    window_ui_loaded_vertical_offset = int(0.045 * screen_res["height"])
+    window_ui_loaded["top"] += window_ui_loaded_vertical_offset
+    window_ui_loaded["height"] = window_ui_loaded_vertical_offset + 2
 
     zoom_default: float = 30
     zoom_level: float = 50  # TODO: validate this is roughly correct on spawn
