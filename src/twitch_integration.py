@@ -398,13 +398,18 @@ class TwitchBot(commands.Bot):
                 return
 
         # Chat with CamDev Tag
-        elif is_dev:
+        elif ctx.message.author.display_name == "BecomeFumoCam":
             action = ActionQueueItem(
                 "chat_with_name", {"name": "[CamDev]:", "msgs": [msg]}
             )
 
         # Standard chat
         else:
+            if ctx.message.author.display_name.lower() not in CFG.chat_trusted_users:
+                await ctx.send("[Sorry! As a temporary security measure, users without the 'Trusted' role cannot send chat messages.]")
+                await ctx.send("[Please check back in a few days!]")
+                return
+
             action = ActionQueueItem(
                 "chat_with_name",
                 {"name": f"{ctx.message.author.display_name}:", "msgs": [msg]},
