@@ -3,6 +3,7 @@ import traceback
 from asyncio import create_task
 from asyncio import sleep as async_sleep
 from datetime import datetime
+from enum import Enum
 from math import floor
 from os import getenv, system
 from time import strftime, time
@@ -22,8 +23,16 @@ from utilities import (
     log_process,
     notify_admin,
     output_log,
+    username_whitelist_request,
     whitelist_request,
 )
+
+
+class NameWhitelistRequest(Enum):
+    NOT_ON_RECORD = 1
+    NEEDS_MORE_MESSAGES = 2
+    READY_TO_REQUEST = 3
+    WHITELIST_REQUEST_SENT = 4
 
 
 class TwitchBot(commands.Bot):
@@ -99,12 +108,28 @@ class TwitchBot(commands.Bot):
 
     async def username_whitelist_requested(self, username):
         username = username.lower()
+        min_to_req_whitelist = 2
         if username in CFG.twitch_username_whitelist_requested:
-            return True
+            return NameWhitelistRequest.WHITELIST_REQUEST_SENT
+        elif username not in CFG.twitch_username_whitelist_requested_pre:
+            # Only trigger a whitelist req if they send more than one message in a session
+            # (But say a whitelist req was made on the first message)
+            CFG.twitch_username_whitelist_requested_pre[username] = 1
+            return NameWhitelistRequest.NOT_ON_RECORD
+        elif (
+            CFG.twitch_username_whitelist_requested_pre[username] + 1
+            < min_to_req_whitelist
+        ):
+            # Havent reached the desired amount to send a whitelist req
+            # Currently this code is redundant until the number is raised
+            amount = CFG.twitch_username_whitelist_requested_pre[username] + 1
+            CFG.twitch_username_whitelist_requested_pre[username] = amount
+            return NameWhitelistRequest.NEEDS_MORE_MESSAGES
+
         CFG.twitch_username_whitelist_requested.add(username)
         with open(CFG.twitch_username_whitelist_requested_path, "w") as f:
             json.dump(list(CFG.twitch_username_whitelist_requested), f)
-        return False
+        return NameWhitelistRequest.READY_TO_REQUEST
 
     async def do_discord_log(self, message: TwitchMessage):
         author = message.author.display_name
@@ -424,22 +449,26 @@ class TwitchBot(commands.Bot):
 
         # Non-trusted chat (whitelist only)
         elif not chat_whitelist.user_is_trusted(CFG, ctx.message.author.display_name):
-            words_to_request_whitelist = []
             real_name = ctx.message.author.display_name
             username = real_name
             if not chat_whitelist.username_in_whitelist(CFG, real_name):
                 username = chat_whitelist.get_random_name(CFG, real_name)
-                if not await self.username_whitelist_requested(real_name.lower()):
+                whitelist_requested_status = await self.username_whitelist_requested(
+                    real_name.lower()
+                )
+                if whitelist_requested_status == NameWhitelistRequest.NOT_ON_RECORD:
                     await ctx.send(
                         f"[Assigning random username '{username}'. Your real username "
                         f"'{real_name}' is pending approval.]"
                     )
-                    words_to_request_whitelist.append(real_name)
+                elif (
+                    whitelist_requested_status == NameWhitelistRequest.READY_TO_REQUEST
+                ):
+                    username_whitelist_request(msg, real_name)
 
             censored_words, censored_message = chat_whitelist.get_censored_string(
                 CFG, msg
             )
-            words_to_request_whitelist += censored_words
 
             blacklisted_words = []
             for word in censored_words:
@@ -463,9 +492,8 @@ class TwitchBot(commands.Bot):
                     f"approval ({', '.join(censored_words)})]"
                 )
 
-            if words_to_request_whitelist:
-                # Send request for either username or words
-                whitelist_request(words_to_request_whitelist, msg, real_name)
+            if censored_words:
+                whitelist_request(censored_words, msg, real_name)
 
             action = ActionQueueItem(
                 "chat_with_name",

@@ -34,20 +34,32 @@ def get_censored_string(CFG: MainBotConfig, string_to_check) -> Tuple[List[str],
     blacklisted_words = []
     censored_string_assembly = []
     space_bypassed_string = ""
+    # punctuation = {"!", "?", ",", ".", ":", ";", "'", '"', "(", ")", "@", "#", "$", "%", "^", "&", "*",}
     for word in string_to_check.split(" "):
         word_is_spaced = False
         original_word = word
         clean_word = "".join(char for char in word if char.isalpha())
 
         # Handle people trying to space out non-whitelisted words
-        if len(clean_word) <= 1:
+        if len(clean_word) == 1:
             space_bypassed_string += clean_word
             continue
         elif len(space_bypassed_string) > 0:
-            clean_word = space_bypassed_string
-            original_word = space_bypassed_string
-            space_bypassed_string = ""
-            word_is_spaced = True
+            space_bypassed_censored = space_bypassed_string
+            if (
+                space_bypassed_string.strip() != ""
+                and space_bypassed_string.lower()
+                not in CFG.chat_whitelist_datasets["whitelisted_words"]
+                and space_bypassed_string.lower()
+                not in CFG.chat_whitelist_datasets["dictionary"]
+            ):
+                blacklisted_words.append(space_bypassed_string.lower())
+                space_bypassed_censored = space_bypassed_string.replace(
+                    space_bypassed_string, "*" * len(space_bypassed_string)
+                )
+            space_bypassed_censored = " ".join(space_bypassed_censored)
+            censored_string_assembly.append(space_bypassed_censored)
+            space_bypassed_string = ""  # Clear space bypass buffer
 
         if (
             clean_word.strip() != ""
@@ -55,12 +67,35 @@ def get_censored_string(CFG: MainBotConfig, string_to_check) -> Tuple[List[str],
             not in CFG.chat_whitelist_datasets["whitelisted_words"]
             and clean_word.lower() not in CFG.chat_whitelist_datasets["dictionary"]
         ):
-            blacklisted_words.append(clean_word.lower())
-            clean_word = original_word.replace(clean_word, "*" * len(clean_word))
+            suffix_removal_success = False
+            if len(clean_word) >= 3:
+                # Allow suffix-extended characters, like "testtttttttttttttttt" qualifying as "test"
+                offset = 1
+                index = len(clean_word) - offset
+                while (index > 2) and clean_word[index] == clean_word[index - 1]:
+                    word_attempt = clean_word[:offset].lower()
+                    print(word_attempt)
+                    if (
+                        word_attempt in CFG.chat_whitelist_datasets["whitelisted_words"]
+                        or word_attempt in CFG.chat_whitelist_datasets["dictionary"]
+                    ):
+                        clean_word = word
+                        suffix_removal_success = True
+                        break
+                    offset += 1
+                    index = len(clean_word) - offset
+
+            if not suffix_removal_success or len(clean_word) < 3:
+                blacklisted_words.append(clean_word.lower())
+                clean_word = original_word.replace(clean_word, "*" * len(clean_word))
         elif word_is_spaced:
             # If we've checked the non-spaced word is fine,
             # retain the spacing
             clean_word = " ".join(clean_word)
+        else:
+            # If we're not censoring, leave numbers in
+            # clean_word = "".join(char for char in word if char.isalnum())
+            clean_word = word
 
         censored_string_assembly.append(clean_word)
 

@@ -213,7 +213,6 @@ class MainBotConfig:
     collisions_disabled = True
 
     chat_overrides = {} # Historically redacted
-
     current_emote = "/e dance3"
     event_timer_running = False
     epoch_time = 1616817600
@@ -310,6 +309,9 @@ class MainBotConfig:
             twitch_chatters = set(twitch_chatters_list)
     except Exception:
         print(f"{twitch_chatters_path} malformed or missing")
+
+    # Many will send one message and leave, require 2 msgs in a session for whitelist
+    twitch_username_whitelist_requested_pre: Dict[str, int] = {}
 
     twitch_username_whitelist_requested: Set[str] = set()
     twitch_username_whitelist_requested_path = (
