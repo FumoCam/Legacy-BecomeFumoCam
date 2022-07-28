@@ -32,7 +32,7 @@ check_dotenv()
 class Twitch:
     channel_name = os.getenv("TWITCH_CHAT_CHANNEL")
     username = "BecomeFumoCamBot"
-    admins = ["becomefumocam", os.getenv("TWITCH_OWNER_USERNAME")]
+    admins = ["becomefumocam", "becomefumocam2", os.getenv("TWITCH_OWNER_USERNAME")]
 
 
 class OBS:
@@ -40,10 +40,6 @@ class OBS:
     event_time = "2021-06-09 12:05:00AM"
     event_end_time = "2021-05-03 10:23:18PM"
     muted_icon_name = "muted_icon.png"
-
-
-class Discord:
-    webhook_username = "BecomeFumoCam"
 
 
 class ActionQueueItem:
@@ -78,12 +74,12 @@ class MainBotConfig:
     action_queue: List[ActionQueueItem] = []
     action_running = False
     advertisement = [
-        "This bot is live on T witch! Go to its Roblox profile for a link, or Google:",
-        '"BecomeFumosCam"',
+        "You can control this bot live! Search for 'Become Fumo' on Twitch, or go to the website:",
+        '"fumboc.live"',
     ]
     birthday_advertisement = [
-        "It's FumoCam's birthday! We're live on T witch, go to my Roblox profile for a link,",
-        ' or Google: "BecomeFumosCam"',
+        "It's this bot's birthday! Search for 'Become Fumo' on Twitch, or go to the website:",
+        '"fumboc.live"',
     ]
     audio_muted = False
     backpack_button_position = (0.87, 0.89)
@@ -150,20 +146,14 @@ class MainBotConfig:
     chat_whitelist_resource_path = resources_path / "chat_whitelist"
     chat_whitelist_dataset_paths = {
         "dictionary": chat_whitelist_resource_path / "dictionary.json",
+        "blacklist": chat_whitelist_resource_path / "blacklist.json",
+        "custom": chat_whitelist_resource_path / "custom.json",
         "random_prefixes": chat_whitelist_resource_path / "random_prefixes.json",
         "random_suffixes": chat_whitelist_resource_path / "random_suffixes.json",
-        "rejected_words": chat_whitelist_resource_path / "rejected_words.json",
-        "trusted_users": chat_whitelist_resource_path / "trusted_users.json",
-        "whitelisted_words": chat_whitelist_resource_path / "whitelisted_words.json",
+        "trusted_usernames": chat_whitelist_resource_path / "trusted_usernames.json",
+        "usernames": chat_whitelist_resource_path / "usernames.json",
     }
-    chat_whitelist_datasets: Dict[str, Set[str]] = {
-        "dictionary": set(),
-        "random_prefixes": set(),
-        "random_suffixes": set(),
-        "rejected_words": set(),
-        "trusted_users": set(),
-        "whitelisted_words": set(),
-    }
+    chat_whitelist_datasets: Dict[str, Set[str]] = {}
 
     for dataset_type in chat_whitelist_dataset_paths:
         dataset_path: Path = chat_whitelist_dataset_paths[dataset_type]
@@ -173,6 +163,17 @@ class MainBotConfig:
                 chat_whitelist_datasets[dataset_type] = set(data)
         except Exception:
             print(f"{dataset_path} malformed or missing")
+
+    # Assemble all json files in `whitelist_data` folder to a single word-dataset
+    _dataset_file_path = Path(chat_whitelist_resource_path, "whitelist_data")
+    chat_whitelist_datasets["whitelist_data"] = set()
+    for dataset_file in _dataset_file_path.glob("*.json"):
+        try:
+            with open(Path(_dataset_file_path, dataset_file), "r") as f:
+                data = json.load(f)
+                chat_whitelist_datasets["whitelist_data"].update(set(data))
+        except Exception:
+            print(f"{dataset_file} malformed or missing")
 
     # Character Select
     character_select_button_position = {"x": screen_res["center_x"], "y": 40}
@@ -223,6 +224,7 @@ class MainBotConfig:
         7137029060: "Nil",
         6601613056: "Hinamizawa",
         8129913919: "Lenen",
+        10290646947: "Dark Museum",
     }
     game_instances_url = (
         "https://www.roblox.com/games/6238705697/Become-Fumo#!/game-instances"
@@ -392,6 +394,9 @@ class MainBotConfig:
     async def add_action_queue(self, item: ActionQueueItem):
         print("Attempted to add action queue item too early!")
         print(item)
+
+    async def do_process_queue(self):
+        print("Attempted to process queue too early!")
 
 
 CFG = MainBotConfig()  # Instantiate the config for use between files

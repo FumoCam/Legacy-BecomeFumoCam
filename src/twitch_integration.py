@@ -133,11 +133,11 @@ class TwitchBot(commands.Bot):
 
     async def do_discord_log(self, message: TwitchMessage, is_chat=False):
         author = message.author.display_name
-        author_url = (
-            f"https://www.twitch.tv/popout/becomefumocam/viewercard/{author.lower()}"
-        )
+        author_url = f"https://twitch.tv/popout/{getenv('TWITCH_CHAT_CHANNEL')}/viewercard/{author.lower()}"
         author_avatar = "https://brand.twitch.tv/assets/images/black.png"
         message = message.content
+        if is_chat:
+            message = message.replace("!m ", "", 1)
         await discord_log(message, author, author_avatar, author_url, is_chat)
 
     async def get_args(self, ctx: commands.Context):
@@ -479,7 +479,7 @@ class TwitchBot(commands.Bot):
                 return
 
         # Chat with CamDev Tag
-        elif ctx.message.author.display_name == "BecomeFumoCam":
+        elif ctx.message.author.display_name == getenv("TWITCH_CHAT_CHANNEL"):
             action = ActionQueueItem(
                 "chat_with_name", {"name": "[CamDev]:", "msgs": [msg]}
             )
@@ -501,14 +501,11 @@ class TwitchBot(commands.Bot):
                 elif (
                     whitelist_requested_status == NameWhitelistRequest.READY_TO_REQUEST
                 ):
+                    # Only send the request after a certain amount of messages, most users do not stick around
                     username_whitelist_request(msg, real_name)
 
-            censored_words, censored_message = chat_whitelist.get_censored_string(
-                CFG, msg
-            )
-
             blacklisted_words = []
-            for word in censored_words:
+            for word in msg.encode("ascii", "ignore").decode("ascii").split(" "):
                 if chat_whitelist.word_in_blacklist(CFG, word):
                     blacklisted_words.append(word)
 
@@ -522,6 +519,10 @@ class TwitchBot(commands.Bot):
                     f"Blacklisted Words: `{', '.join(blacklisted_words)}`"
                 )
                 return
+
+            censored_words, censored_message = chat_whitelist.get_censored_string(
+                CFG, msg
+            )
 
             if censored_words:
                 await ctx.send(
@@ -583,10 +584,8 @@ class TwitchBot(commands.Bot):
             " The dev has already been notified]"
         )
 
-        mod_url = f"<https://www.twitch.tv/popout/becomefumocam/viewercard/{ctx.message.author.name.lower()}>"
-        target_url = (
-            f"<https://www.twitch.tv/popout/becomefumocam/viewercard/{name.lower()}>"
-        )
+        mod_url = f"<https://twitch.tv/popout/{getenv('TWITCH_CHAT_CHANNEL')}/viewercard/{ctx.message.author.name.lower()}>"
+        target_url = f"<https://twitch.tv/popout/{getenv('TWITCH_CHAT_CHANNEL')}/viewercard/{name.lower()}>"
 
         notify_admin(
             f"{ctx.message.author.name} has blacklisted {name}\n{mod_url}\n{target_url}"
@@ -653,18 +652,48 @@ class TwitchBot(commands.Bot):
         if not args:
             await ctx.send("[Specify a word to whitelist!]")
             return
-        before = len(CFG.chat_whitelist_datasets["whitelisted_words"])
+        before = len(CFG.chat_whitelist_datasets["custom"])
 
         word_to_whitelist = args[0].lower()
 
-        CFG.chat_whitelist_datasets["whitelisted_words"].add(word_to_whitelist)
-        with open(CFG.chat_whitelist_dataset_paths["whitelisted_words"], "w") as f:
-            json.dump(list(CFG.chat_whitelist_datasets["whitelisted_words"]), f)
+        CFG.chat_whitelist_datasets["custom"].add(word_to_whitelist)
+        with open(CFG.chat_whitelist_dataset_paths["custom"], "w") as f:
+            json.dump(sorted(CFG.chat_whitelist_datasets["custom"]), f, indent=2)
 
-        after = len(CFG.chat_whitelist_datasets["whitelisted_words"])  # Sanity Check
+        after = len(CFG.chat_whitelist_datasets["custom"])  # Sanity Check
 
         await ctx.send(
             f"[Added '{word_to_whitelist}' to whitelist! ({before}->{after})]"
+        )
+
+        return False
+
+    @commands.command()
+    async def userwhitelist(self, ctx: commands.Context):
+        if not await self.is_dev(ctx.author):
+            await ctx.send("[You do not have permission!]")
+            return
+
+        args = await self.get_args(ctx)
+        if not args:
+            await ctx.send("[Specify a username to whitelist!]")
+            return
+        before = len(CFG.chat_whitelist_datasets["usernames"])
+
+        word_to_whitelist = args[0].lower()
+
+        CFG.chat_whitelist_datasets["usernames"].add(word_to_whitelist)
+        with open(CFG.chat_whitelist_dataset_paths["usernames"], "w") as f:
+            json.dump(
+                sorted(CFG.chat_whitelist_datasets["usernames"]),
+                f,
+                indent=2,
+            )
+
+        after = len(CFG.chat_whitelist_datasets["usernames"])  # Sanity Check
+
+        await ctx.send(
+            f"[Added '{word_to_whitelist}' to username whitelist! ({before}->{after})]"
         )
 
         return False
@@ -740,6 +769,12 @@ async def routine_clock():
     current_time = strftime("%I:%M:%S%p EST")
     CFG.days_since_creation = floor((time() - CFG.epoch_time) / (60 * 60 * 24))
     output_log("clock", f"Day {CFG.days_since_creation}\n{current_time}")
+
+
+@routines.routine(seconds=1, wait_first=True)
+async def routine_unstuck_queue():
+    # This is a bad solution
+    await CFG.do_process_queue()
 
 
 @routines.routine(seconds=3, wait_first=True)
