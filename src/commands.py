@@ -32,6 +32,28 @@ async def click_sit_button():
     log_process("")
 
 
+async def click_taunt_button():
+    log_process("Clicking taunt/emote button")
+    await check_active()
+
+    need_zoom_adjust = False
+    if CFG.zoom_level < CFG.zoom_ui_min:
+        ACFG.zoom("o", CFG.zoom_out_ui)
+        need_zoom_adjust = True
+
+    ratio_x, ratio_y = CFG.taunt_button_position
+    x = round(CFG.screen_res["width"] * ratio_x)
+    y = round(CFG.screen_res["height"] * ratio_y)
+    ACFG.moveMouseAbsolute(x=x, y=y)
+    ACFG.left_click()
+    await async_sleep(0.25)
+    ACFG.resetMouse()
+
+    if need_zoom_adjust:
+        ACFG.zoom("i", CFG.zoom_out_ui_cv)
+    log_process("")
+
+
 async def click_backpack_button():
     log_process(f"{'Closing' if CFG.backpack_open else 'Opening'} backpack")
     await check_active()

@@ -18,7 +18,12 @@ from actions import (
     send_chat,
 )
 from chat_ocr import activate_ocr, deactivate_ocr
-from commands import click_backpack_button, click_item, click_sit_button
+from commands import (
+    click_backpack_button,
+    click_item,
+    click_sit_button,
+    click_taunt_button,
+)
 from config import ActionQueueItem
 from health import (
     ACFG,
@@ -227,6 +232,8 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
             log("")
         elif action.name == "sit":
             await click_sit_button()
+        elif action.name == "stoptaunt":
+            await click_taunt_button()
         elif action.name == "use":
             log_process("Pressing Use (e)")
             ACFG.use()

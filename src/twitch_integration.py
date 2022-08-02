@@ -256,6 +256,26 @@ class TwitchBot(commands.Bot):
     @commands.command()
     async def sit(self, ctx: commands.Context):
         await CFG.add_action_queue(ActionQueueItem("sit"))
+    
+    async def _stoptaunt(self, ctx: commands.Context):
+        await ctx.send("If this opened a menu, please run the command again to close it!")
+        await CFG.add_action_queue(ActionQueueItem("stoptaunt"))
+    
+    @commands.command()
+    async def stoptaunt(self, ctx: commands.Context):
+        await self._stoptaunt(ctx)
+
+    @commands.command()
+    async def tauntstop(self, ctx: commands.Context):
+        await self._stoptaunt(ctx)
+    
+    @commands.command()
+    async def canceltaunt(self, ctx: commands.Context):
+        await self._stoptaunt(ctx)
+
+    @commands.command()
+    async def tauntcancel(self, ctx: commands.Context):
+        await self._stoptaunt(ctx)
 
     @commands.command()
     async def use(self, ctx: commands.Context):

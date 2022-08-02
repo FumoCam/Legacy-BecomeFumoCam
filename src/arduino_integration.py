@@ -309,7 +309,7 @@ class ArduinoConfig:
         sleep(0.75)
 
     def use(self):
-        payload = {"type": "keyhold", "key": "e", "hold_time": 1.5}
+        payload = {"type": "keyhold", "key": "e", "hold_time": 1.75}
         self.arduino_interface(payload, payload["hold_time"])
 
     def zoom(self, zoom_direction_key: str, amount: float):

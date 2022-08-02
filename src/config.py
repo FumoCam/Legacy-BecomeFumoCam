@@ -298,6 +298,7 @@ class MainBotConfig:
     sit_button_position = (0.79, 0.89)
     sitting_status = False
 
+    taunt_button_position = (0.73, 0.89)
     twitch_blacklist = []
     twitch_blacklist_path = OBS.output_folder / "twitch_blacklist.json"
     try:
