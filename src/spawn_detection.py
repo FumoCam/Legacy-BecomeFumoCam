@@ -100,7 +100,7 @@ def spawn_detection_main(
         cv.waitKey(250)
     screenshot_img = edge
 
-    spawns = ["comedy_machine", "main", "tree_house"]
+    spawns = ["comedy_machine", "main", "tree_house", "savannah", "train"]
     best_match_label = "ERROR"
     best_match_confidence = 0
     for spawn in spawns:

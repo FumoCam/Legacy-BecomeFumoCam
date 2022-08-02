@@ -567,6 +567,7 @@ async def server_spawn() -> bool:
         return False
 
     # 2022-07-11 login-message hotfix
+    sleep(1)
     target_x = 1040
     target_y = 100
     ACFG.moveMouseAbsolute(x=target_x, y=target_y)
@@ -580,7 +581,7 @@ async def server_spawn() -> bool:
 
     ACFG.resetMouse()
 
-    await auto_nav("shrimp", do_checks=False)
+    await auto_nav("shrimp", do_checks=False, force=True)
 
     return True
 
@@ -617,7 +618,10 @@ async def handle_join_new_server(crash=False):
 
 
 async def auto_nav(
-    location: str, do_checks: bool = True, slow_spawn_detect: bool = True
+    location: str,
+    do_checks: bool = True,
+    slow_spawn_detect: bool = True,
+    force: bool = False,
 ):
     log_process("AutoNav")
     if do_checks:
@@ -639,6 +643,30 @@ async def auto_nav(
     if spawn == "ERROR":
         log("Failed to detect spawn!\n Notifying Dev...")
         notify_admin("Failed to find spawn in `auto_nav`")
+        sleep(5)
+        return
+
+    MAX_ATTEMPTS = 10
+    VALID_SPAWNS = {"main", "comedy_machine", "tree_house"}
+    respawn_attempts = 1
+    while spawn not in VALID_SPAWNS and ((respawn_attempts < MAX_ATTEMPTS) or force):
+        attempt_str = "" if force else f" (Attempt {respawn_attempts}/{MAX_ATTEMPTS})"
+        retry_message = f"'{spawn}' is not a usable spawn! \nRetrying...{attempt_str}"
+        log(retry_message)
+        ACFG.zoom(zoom_direction_key="i", amount=80)
+        log("Respawning")
+        await respawn_character(notify_chat=False)
+        sleep(5)
+        log("Zooming out to full scale")
+        ACFG.zoom(zoom_direction_key="o", amount=105)
+        spawn = spawn_detection_main(CFG.resources_path, slow=slow_spawn_detect)
+        respawn_attempts += 1
+
+    if spawn not in VALID_SPAWNS:
+        log(
+            f"Failed to find a valid spawn after {MAX_ATTEMPTS} attempts!\nPlease try again."
+        )
+        notify_admin(f"Failed to find spawn after {MAX_ATTEMPTS} in `auto_nav`")
         sleep(5)
         return
 
@@ -873,8 +901,13 @@ if __name__ == "__main__":
 
     async def test():
         await check_active(force_fullscreen=False)
-        await auto_nav("beach", do_checks=False, slow_spawn_detect=False)
-        # comedy_to_main()
-        # await main_to_train()
+        # Treehouse
+        # ACFG.precision_look("left", 1314, raw=True)
+
+        # Main
+        # ACFG.precision_look("right", 7, raw=True)
+
+        # Comedy
+        # ACFG.precision_look("right", 469, raw=True)
 
     asyncio.get_event_loop().run_until_complete(test())

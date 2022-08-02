@@ -179,35 +179,21 @@ def main_to_classic_fix_bright():
 def main_to_treehouse_bench():
     log_process("AutoNav")
     log("-> Treehouse Bench")
+
+    # To calibration corner, bottom of steps
     ACFG.move("d", 0.8, raw=True)
     ACFG.move("w", 1.2, raw=True)
     ACFG.move("a", 0.3, raw=True)
     ACFG.move("w", 2.8, raw=True)
-    ACFG.move("a", 3.9, raw=True)
+    ACFG.move("a", 4.9, raw=True)
     ACFG.move("s", 1, raw=True)
-    ACFG.move("d", 0.7, raw=True)
-
-    # Calibration corner before vines
-    ACFG.move("w", 0.3, raw=True)
-    ACFG.move("a", 0.3, raw=True)
+    ACFG.move("d", 1, raw=True)
     ACFG.move("s", 1, raw=True)
-    ACFG.leap(forward_time=0.25, jump_time=0.4, direction_key="s")
-    ACFG.move("s", 0.6, raw=True)
-    ACFG.move("d", 0.6, raw=True)
-
-    # Calibration corner above vines
-    ACFG.move("a", 0.2, raw=True)
-    ACFG.move("w", 0.27, raw=True)
-    ACFG.leap(forward_time=0.9, jump_time=0.4, direction_key="d")
-    ACFG.move("s", 0.3, raw=True)
-    ACFG.leap(forward_time=0.9, jump_time=0.4, direction_key="s")
     ACFG.move("d", 0.3, raw=True)
-    ACFG.leap(forward_time=1.2, jump_time=0.9, direction_key="d", jump_delay=0.3)
-    ACFG.move("a", 0.1, raw=True)
-    ACFG.move("w", 0.3, raw=True)
-    ACFG.leap(forward_time=0.5, jump_time=0.5, direction_key="s")
-    ACFG.move("s", 0.5, raw=True)
-    ACFG.move("a", 0.9, raw=True)
+    ACFG.move("s", 0.3, raw=True)
+
+    # TODO: a reasonably replicatable route
+    # (Not really possible with the messed up terrain in the new update)
 
 
 def treehouse_bench_calibration():

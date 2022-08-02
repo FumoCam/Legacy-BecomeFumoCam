@@ -256,11 +256,13 @@ class TwitchBot(commands.Bot):
     @commands.command()
     async def sit(self, ctx: commands.Context):
         await CFG.add_action_queue(ActionQueueItem("sit"))
-    
+
     async def _stoptaunt(self, ctx: commands.Context):
-        await ctx.send("If this opened a menu, please run the command again to close it!")
+        await ctx.send(
+            "If this opened a menu, please run the command again to close it!"
+        )
         await CFG.add_action_queue(ActionQueueItem("stoptaunt"))
-    
+
     @commands.command()
     async def stoptaunt(self, ctx: commands.Context):
         await self._stoptaunt(ctx)
@@ -268,7 +270,7 @@ class TwitchBot(commands.Bot):
     @commands.command()
     async def tauntstop(self, ctx: commands.Context):
         await self._stoptaunt(ctx)
-    
+
     @commands.command()
     async def canceltaunt(self, ctx: commands.Context):
         await self._stoptaunt(ctx)
@@ -645,6 +647,15 @@ class TwitchBot(commands.Bot):
             await ctx.send(f'[{", ".join(list(CFG.nav_locations.keys()))}]')
             return
         location = args[0].lower()
+        if location == "treehouse":
+            await ctx.send(
+                "Sorry, Treehouse autonav no longer works! The game was updated and the terrain is too user-hostile to navigate there."
+            )
+            await ctx.send(
+                "If you want to help, reach out to https://twitter.com/@OkuechiRblx and ask him to fix the treehouse path."
+            )
+            return
+
         await ctx.send("[Requested AutoNav! If we fail, re-run the command!]")
         await ctx.send(
             "[If we did not respawn, please run !respawnforce (we're stuck!) and re-run the !nav command.]"
