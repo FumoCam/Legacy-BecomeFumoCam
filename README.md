@@ -1,12 +1,18 @@
 # FumoCam
 
-A 24/7, interactive, in-game Twitch bot.
+A 24/7, interactive, in-game Twitch bot ran for over a year, amassing 5,000+ followers by itself.
 
-Twitch: https://www.twitch.tv/becomefumocam
+Due to targeted attacks and Twitch staff not reviewing appeals/allowing fake reports, it no longer streams on the original channel.
+
+Original Channel: https://twitch.tv/becomefumocam
 
 # Writeup
 
-Full writeup pending, but an intro is available. Want to know why I made a bot for a game I dont play about a fandom I don't follow?
+There has been too many drastic additions and removals of functionality since it was created to have an accurate, formal writeup.
+
+However, a semi-technical "intro" exists.
+
+Want to know why I made a bot for a game I dont play about a fandom I don't follow?
 
 < HISTORICALLY_REDACTED >
 
