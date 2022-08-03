@@ -7,7 +7,10 @@ from enum import Enum
 from math import floor
 from os import getenv, system
 from time import strftime, time
+from typing import Union
 
+from requests import get, post
+from requests.exceptions import HTTPError
 from twitchio import Chatter as TwitchChatter
 from twitchio import Message as TwitchMessage
 from twitchio.ext import commands, routines
@@ -158,6 +161,7 @@ class TwitchBot(commands.Bot):
             routine_crash_check,
             routine_reboot,
             routine_ocr,
+            routine_monitor_game_updates,
         ]
         for subroutine in subroutines:
             print(
@@ -508,23 +512,23 @@ class TwitchBot(commands.Bot):
 
         # Non-trusted chat (whitelist only)
         elif not chat_whitelist.user_is_trusted(CFG, ctx.message.author.display_name):
-            real_name = ctx.message.author.display_name
-            username = real_name
-            if not chat_whitelist.username_in_whitelist(CFG, real_name):
-                username = chat_whitelist.get_random_name(CFG, real_name)
+            original_name = ctx.message.author.display_name
+            temporary_name = original_name
+            if not chat_whitelist.username_in_whitelist(CFG, original_name):
+                temporary_name = chat_whitelist.get_random_name(CFG, original_name)
                 whitelist_requested_status = await self.username_whitelist_requested(
-                    real_name.lower()
+                    original_name.lower()
                 )
                 if whitelist_requested_status == NameWhitelistRequest.NOT_ON_RECORD:
                     await ctx.send(
-                        f"[Assigning random username '{username}'. Your real username "
-                        f"'{real_name}' is pending approval.]"
+                        f"[Assigning random username '{temporary_name}'. Your real username "
+                        f"'{original_name}' is pending approval.]"
                     )
                 elif (
                     whitelist_requested_status == NameWhitelistRequest.READY_TO_REQUEST
                 ):
                     # Only send the request after a certain amount of messages, most users do not stick around
-                    username_whitelist_request(msg, real_name)
+                    username_whitelist_request(msg, original_name)
 
             blacklisted_words = []
             for word in msg.encode("ascii", "ignore").decode("ascii").split(" "):
@@ -537,8 +541,9 @@ class TwitchBot(commands.Bot):
                     f"{', '.join(blacklisted_words)}). The dev has been notified.]"
                 )
                 notify_admin(
-                    f"[BLACKLIST ALERT]\nUser: `{real_name}`\nMessage: {msg}\n"
-                    f"Blacklisted Words: `{', '.join(blacklisted_words)}`"
+                    f"[BLACKLIST ALERT]\nUser: `{original_name}`\nMessage: {msg}\n"
+                    f"Blacklisted Words: `{', '.join(blacklisted_words)}`\n"
+                    f"<https://twitch.tv/popout/{getenv('TWITCH_CHAT_CHANNEL')}/viewercard/{original_name.lower()}>"
                 )
                 return
 
@@ -553,12 +558,12 @@ class TwitchBot(commands.Bot):
                 )
 
             if censored_words:
-                whitelist_request(censored_words, msg, real_name)
+                whitelist_request(censored_words, msg, original_name)
 
             action = ActionQueueItem(
                 "chat_with_name",
                 {
-                    "name": f"{username}:",
+                    "name": f"{temporary_name}:",
                     "msgs": [censored_message],
                 },
             )
@@ -866,6 +871,55 @@ async def routine_crash_check():
             await async_sleep(60)
     except Exception:
         error_log(traceback.format_exc())
+
+
+def check_for_game_updates() -> Union[None, str]:
+    UNIVERSE_ID = 2291704236
+    API_URL = "https://games.roblox.com/v1/games"
+    try:
+        response = get(API_URL, params={"universeIds": [UNIVERSE_ID]}, timeout=10)
+    except Exception:
+        print("[Could not poll for game updates, servers may be down]")
+        error_log(traceback.format_exc())
+        return None
+
+    if response.status_code == 200:
+        response_result = response.json()
+        data = response_result.get("data", [{}])[0]
+        if "updated" in data:
+            return data["updated"]
+
+    try:
+        readable_response = json.dumps(json.loads(response.text), indent=4)
+    except Exception:
+        readable_response = response.text
+
+    error_log(f"[Error, bad response]\n{readable_response}", do_print=True)
+    return None
+
+
+@routines.routine(seconds=30)
+async def routine_monitor_game_updates():
+    print("[Checking for game updates]")
+    last_update = check_for_game_updates()
+    if last_update is None or CFG.game_update_timestamp == last_update:
+        # API failed or the game hasn't been updated, so we don't care
+        print("[No game updates found]")
+        return
+
+    CFG.game_update_timestamp = last_update
+    with open(CFG.game_update_file, "w") as f:
+        json.dump(CFG.game_update_timestamp, f)
+
+    webhook_url = getenv("DISCORD_WEBHOOK_UPDATES_CHANNEL")
+    webhook_data = {"content": f"**__Update detected__**\n{last_update}"}
+    result = post(webhook_url, json=webhook_data)
+    try:
+        result.raise_for_status()
+    except HTTPError as err:
+        print(err)
+    else:
+        print("[Update notification sent]")
 
 
 def twitch_main():

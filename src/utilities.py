@@ -54,7 +54,9 @@ def run_as_admin():
         exit()
 
 
-def error_log(error_msg: str, file_name: str = "_errors"):
+def error_log(error_msg: str, file_name: str = "_errors", do_print=False):
+    if do_print:
+        print(error_msg)
     if not os.path.exists(OBS.output_folder):
         os.mkdir(OBS.output_folder)
     file_path = os.path.join(OBS.output_folder, f"{file_name}.txt")
@@ -270,7 +272,7 @@ def whitelist_request(
 
     user_url = f"https://twitch.tv/popout/{os.getenv('TWITCH_CHAT_CHANNEL')}/viewercard/{username.lower()}"
     command = "!userwhitelist" if is_username_req else "!whitelist"
-    whitelist_text = [f"`{command} {word}`" for word in requests]
+    whitelist_text = [f"{command} {word}" for word in requests]
     message_title = (
         f"__Username Request__\n**{username}**"
         if is_username_req

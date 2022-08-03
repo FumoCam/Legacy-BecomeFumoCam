@@ -230,6 +230,14 @@ class MainBotConfig:
         "https://www.roblox.com/games/6238705697/Become-Fumo#!/game-instances"
     )
 
+    game_update_file = OBS.output_folder / "last_game_update.json"
+    game_update_timestamp = ""
+    try:
+        with open(game_update_file, "r") as f:
+            game_update_timestamp = json.load(f)
+    except Exception:
+        print(f"{game_update_file} malformed or missing")
+
     help_url = os.getenv("HELP_URL")
 
     max_attempts_better_server = 20

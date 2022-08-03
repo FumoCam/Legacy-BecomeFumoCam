@@ -561,17 +561,22 @@ async def check_if_game_loaded() -> bool:
     return True
 
 
+async def close_login_message():
+    # 2022-07-11 login-message hotfix
+    check_active()
+    sleep(2)
+    target_x = 1040
+    target_y = 100
+    ACFG.moveMouseAbsolute(x=target_x, y=target_y)
+    ACFG.left_click()
+
+
 async def server_spawn() -> bool:
     game_loaded = await check_if_game_loaded()
     if not game_loaded:
         return False
 
-    # 2022-07-11 login-message hotfix
-    sleep(1)
-    target_x = 1040
-    target_y = 100
-    ACFG.moveMouseAbsolute(x=target_x, y=target_y)
-    ACFG.left_click()
+    await close_login_message()
 
     if CFG.disable_collisions_on_spawn:
         CFG.collisions_disabled = False
@@ -858,6 +863,9 @@ async def toggle_collisions() -> bool:
         return False
 
     log(f"Finding {CFG.settings_menu_grief_label} option")
+    if not await ocr_for_settings():
+        # 2022-07-11 login-message hotfix
+        await close_login_message()
     if not await ocr_for_settings():
         notify_admin("Failed to click settings option")
         log("")
