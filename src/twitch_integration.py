@@ -5,9 +5,7 @@ from asyncio import create_task
 from asyncio import sleep as async_sleep
 from datetime import datetime
 from enum import Enum
-from math import floor
 from os import getenv, system
-from time import time
 from typing import Union
 
 from requests import get, post
@@ -42,56 +40,41 @@ class NameWhitelistRequest(Enum):
 class TwitchBot(commands.Bot):
     def __init__(self, token: str, channel_name: str):
         super().__init__(token=token, prefix="!", initial_channels=[channel_name])
-        self.help_msgs = [
-            f"For a full list of commands, visit {CFG.help_url}",
-            "If you just want to play around, try '!m hello', '!move w 2', or '!nav shrimp'",
-            f"For previous updates, visit {CFG.updates_url}",
-        ]
 
     async def event_ready(self):
         print(f'[Twitch] Logged in as "{self.nick}"')
         await CFG.async_main()
         await self.run_subroutines()
-        await asyncio.gather(ws_init(), hw_update_loop(), async_twitch_main())
+        await asyncio.gather(ws_init(), hw_update_loop())
 
     async def event_message(self, message: TwitchMessage):
         if message.echo:
             return
-        msg_str = f"[Twitch] {message.author.display_name}: {message.content}"
 
-        print(msg_str.encode("ascii", "ignore").decode("ascii", "ignore"))
-
-        log_task = create_task(self.do_discord_log(message))
-
-        if message.author.name not in CFG.twitch_blacklist:
-            commands_task = create_task(self.handle_commands(message))
-        else:
-            if message.content.startswith("!dev"):
-                await self.manual_dev_command(message)
-
+        # Send a greeting + help message if new user
         if await self.is_new_user(message.author.name):
-            for msg in self.help_msgs:
-                await message.channel.send(msg)
-
             await message.channel.send(
-                f"Welcome to the stream {message.author.mention}! "
-                "This is a 24/7 bot you can control with chat commands! See above."
+                CFG.new_user_msg.format(user_mention=message.author.mention)
             )
+            await message.channel.send(CFG.help_msg)
 
+        # Log message
+        log_task = create_task(self.do_discord_log(message))
         try:
             await log_task
         except Exception:
             print(traceback.format_exc())
             notify_admin(f"```{traceback.format_exc()}```")
 
-        if message.author.name not in CFG.twitch_blacklist:
-            try:
-                await commands_task
-            except commands.errors.CommandNotFound:
-                pass
-            except Exception:
-                print(traceback.format_exc())
-                notify_admin(f"```{traceback.format_exc()}```")
+        # Execute task
+        commands_task = create_task(self.handle_commands(message))
+        try:
+            await commands_task
+        except commands.errors.CommandNotFound:
+            pass
+        except Exception:
+            print(traceback.format_exc())
+            notify_admin(f"```{traceback.format_exc()}```")
 
     async def event_command_error(self, ctx: commands.Context, error: Exception):
         if type(error) == commands.errors.CommandNotFound:
@@ -159,7 +142,6 @@ class TwitchBot(commands.Bot):
         subroutines = [
             routine_anti_afk,
             routine_check_better_server,
-            routine_clock,
             routine_crash_check,
             routine_reboot,
             routine_ocr,
@@ -175,8 +157,7 @@ class TwitchBot(commands.Bot):
 
     @commands.command()
     async def help(self, ctx: commands.Context):
-        for msg in self.help_msgs:
-            await ctx.send(msg)
+        await ctx.send(CFG.help_msg)
 
     @commands.command()
     async def backpack(self, ctx: commands.Context):
@@ -402,20 +383,6 @@ class TwitchBot(commands.Bot):
         pitch_camera_direction = "down"
         await self.camera_pitch_handler(pitch_camera_direction, ctx)
 
-    async def manual_dev_command(self, message: TwitchMessage):
-        args = message.content.split(" ", 1)
-        if len(args) < 2:
-            await message.channel.send(
-                "[Specify a message, this command is for emergencies! (Please do not misuse it)]"
-            )
-            return
-        msg = args[-1]
-        notify_admin(f"{message.author}: {msg}")
-        await message.channel.send(
-            "[Notified dev! As a reminder, you have been blacklisted by a trusted member, so your"
-            " controls will not work. If you feel this is in error, use this commmand.]"
-        )
-
     @commands.command()
     async def dev(self, ctx: commands.Context):
         args = await self.get_args(ctx)
@@ -485,6 +452,8 @@ class TwitchBot(commands.Bot):
             return
         is_dev = await self.is_dev(ctx.message.author)
 
+        nickname = CFG.chat_nicknames.val.get(ctx.message.author.display_name)
+
         # Disable whisper functionality
         if msg.startswith("[") or msg.startswith("/w"):
             await ctx.send("[You do not have permission to whisper.]")
@@ -501,7 +470,6 @@ class TwitchBot(commands.Bot):
         # Allow /e, disable all other commands from twitch
         elif msg.startswith("/"):
             if msg.startswith("/e"):
-                CFG.current_emote = msg
                 action = ActionQueueItem("chat", {"msgs": [msg]})
             else:
                 return
@@ -515,15 +483,18 @@ class TwitchBot(commands.Bot):
         # Non-trusted chat (whitelist only)
         elif not chat_whitelist.user_is_trusted(CFG, ctx.message.author.display_name):
             original_name = ctx.message.author.display_name
-            temporary_name = original_name
-            if not chat_whitelist.username_in_whitelist(CFG, original_name):
-                temporary_name = chat_whitelist.get_random_name(CFG, original_name)
+            real_or_temp_name = nickname or original_name
+            if (
+                not chat_whitelist.username_in_whitelist(CFG, original_name)
+                and not nickname
+            ):
+                real_or_temp_name = chat_whitelist.get_random_name(CFG, original_name)
                 whitelist_requested_status = await self.username_whitelist_requested(
                     original_name.lower()
                 )
                 if whitelist_requested_status == NameWhitelistRequest.NOT_ON_RECORD:
                     await ctx.send(
-                        f"[Assigning random username '{temporary_name}'. Your real username "
+                        f"[Assigning random username '{real_or_temp_name}'. Your real username "
                         f"'{original_name}' is pending approval.]"
                     )
                 elif (
@@ -565,7 +536,7 @@ class TwitchBot(commands.Bot):
             action = ActionQueueItem(
                 "chat_with_name",
                 {
-                    "name": f"{temporary_name}:",
+                    "name": f"{real_or_temp_name}:",
                     "msgs": [censored_message],
                 },
             )
@@ -574,51 +545,13 @@ class TwitchBot(commands.Bot):
         else:
             action = ActionQueueItem(
                 "chat_with_name",
-                {"name": f"{ctx.message.author.display_name}:", "msgs": [msg]},
+                {
+                    "name": f"{nickname or ctx.message.author.display_name}:",
+                    "msgs": [msg],
+                },
             )
         await self.do_discord_log(ctx.message, is_chat=True)
         await CFG.add_action_queue(action)
-
-    @commands.command()  # Send message in-game
-    async def blacklist(self, ctx: commands.Context):
-        if ctx.message.author.name.lower() not in CFG.vip_twitch_names:
-            await ctx.send("[You do not have permission to run this command!]")
-        args = await self.get_args(ctx)
-        if not args:
-            await ctx.send("[Please specify a user!]")
-            return
-        try:
-            name = args[0].lower()
-            if name[0] == "@":
-                name = name[1:]
-        except Exception:
-            await ctx.send("[Please specify a user!]")
-            return
-
-        added = False
-        if name not in CFG.twitch_blacklist:
-            CFG.twitch_blacklist.append(name)
-            with open(str(CFG.twitch_blacklist_path), "w") as f:
-                json.dump(CFG.twitch_blacklist, f)
-            added = True
-
-        await ctx.send(
-            f"['{name}' has {'already' if not added else ''} been blacklisted from interacting with FumoCam.]"
-        )
-        await async_sleep(1)
-        await ctx.send("[It is recommended you also report them to Twitch, if needed.]")
-        await async_sleep(1)
-        await ctx.send(
-            f"[@{name} if you feel this is in error, please type '!dev unjust ban' in chat."
-            " The dev has already been notified]"
-        )
-
-        mod_url = f"<https://twitch.tv/popout/{getenv('TWITCH_CHAT_CHANNEL')}/viewercard/{ctx.message.author.name.lower()}>"
-        target_url = f"<https://twitch.tv/popout/{getenv('TWITCH_CHAT_CHANNEL')}/viewercard/{name.lower()}>"
-
-        notify_admin(
-            f"{ctx.message.author.name} has blacklisted {name}\n{mod_url}\n{target_url}"
-        )
 
     @commands.command()
     async def move(self, ctx: commands.Context):
@@ -656,10 +589,12 @@ class TwitchBot(commands.Bot):
         location = args[0].lower()
         if location == "treehouse":
             await ctx.send(
-                "Sorry, Treehouse autonav no longer works! The game was updated and the terrain is too user-hostile to navigate there."
+                "Sorry, Treehouse autonav no longer works! The game was updated and the terrain is too user-hostile to "
+                "navigate there."
             )
             await ctx.send(
-                "If you want to help, reach out to https://twitter.com/@OkuechiRblx and ask him to fix the treehouse path."
+                "If you want to help, reach out to https://twitter.com/@OkuechiRblx and ask him to fix the treehouse "
+                "path."
             )
             return
 
@@ -802,11 +737,6 @@ async def routine_check_better_server():
         error_log(traceback.format_exc())
 
 
-@routines.routine(minutes=1, wait_first=True)
-async def routine_clock():
-    CFG.days_since_creation = floor((time() - CFG.epoch_time) / (60 * 60 * 24))
-
-
 @routines.routine(seconds=1)
 async def routine_hw_stats():
     await get_hw_stats()
@@ -935,19 +865,6 @@ async def routine_monitor_game_updates():
         print(err)
     else:
         print("[Update notification sent]")
-
-
-async def async_twitch_main():
-    token = getenv("TWITCH_BOT_TOKEN")
-    channel = Twitch.channel_name
-    bot = TwitchBot(token, channel)
-    # await bot.start()
-    # try:
-    #     await bot.connect()
-    #     await bot._closing.wait()
-    # finally:
-    #     if not bot._closing.is_set():
-    #         await bot.close()
 
 
 def twitch_main():

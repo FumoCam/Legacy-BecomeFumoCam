@@ -346,12 +346,12 @@ function update_loop(animation_speed_ms) {
 
 function changelog() {
   // START CHANGE-ME
-  const VERSION = 411;
-  const UPDATE_DATE = "2022-08-19";
+  const VERSION = 412;
+  const UPDATE_DATE = "2022-08-27";
   const UPDATE_ITEMS = [
-    "Added HUD core",
-    "Replaced some OBS elements with HUD elements",
-    "Upgraded hardware monitoring system",
+    "Moved FumoCam to a new machine, temperatures should be better",
+    "Cleaned up some old FumoCam code, upgraded to Python 3.10 and updated all dependencies",
+    "IF SOMETHING NO LONGER WORKS, PLEASE USE !dev",
   ];
   // END CHANGE-ME
   animateNumericalValue(

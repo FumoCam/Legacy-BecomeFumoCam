@@ -43,10 +43,7 @@ async def do_anti_afk():
 
 
 async def do_advert():
-    advert = CFG.advertisement
-    if CFG.days_since_creation % 365 == 0:
-        advert = CFG.birthday_advertisement
-    for message in advert:
+    for message in CFG.advertisement:
         await send_chat(message)
         await async_sleep(len(message) * CFG.chat_name_sleep_factor)
 
@@ -102,7 +99,7 @@ async def mute_toggle(set_mute: Union[bool, None] = None):
                 os.remove(OBS.output_folder / OBS.muted_icon_name)
         except OSError:
             log("Error, could not remove icon!\nNotifying admin...")
-            async_sleep(2)
+            await async_sleep(2)
             notify_admin("Mute icon could not be removed")
             log(log_msg)
         output_log("muted_status", "")

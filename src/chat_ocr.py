@@ -324,4 +324,4 @@ if __name__ == "__main__":
         await async_sleep(2)
         await do_chat_ocr()
 
-    asyncio.get_event_loop().run_until_complete(test())
+    asyncio.run(test())

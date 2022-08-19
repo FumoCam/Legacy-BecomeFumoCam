@@ -1,10 +1,10 @@
 import json
 import os
 import sqlite3
+from math import floor
 from pathlib import Path
-from re import compile as re_compile
 from time import time
-from typing import Dict, List, Set
+from typing import Any, Dict, List, Set
 
 from dotenv import dotenv_values, load_dotenv
 from mss import mss
@@ -57,31 +57,124 @@ class BlockedMouseRegion:
         self.y2 = y2
 
 
-class MainBotConfig:
-    resources_path = Path.cwd().parent / "resources"
-    screen_res = {  # todo: Don't use globals, make class-based
-        "width": get_monitor_size()[0],
-        "height": get_monitor_size()[1],
-        "x_multi": get_monitor_size()[0] / 2560,
-        "y_multi": get_monitor_size()[1] / 1440,
-        "center_x_float": get_monitor_size()[0] / 2,
-        "center_y_float": get_monitor_size()[1] / 2,
-        "center_x": int(get_monitor_size()[0] / 2),
-        "center_y": int(get_monitor_size()[1] / 2),
-        "mss_monitor": mss().monitors[-1],
-    }
+def json_load_or_default(json_path: Path, default=None):
+    try:
+        with open(json_path, "r") as json_file_stream:
+            json_obj = json.load(json_file_stream)
+            return json_obj
+    except Exception:
+        print(f"{json_path} malformed or missing")
+        return default
 
+
+class FileBasedData:
+    def __init__(
+        self,
+        json_path: Path,
+        default: Any,
+        do_sort: bool = True,
+        do_format: bool = True,
+    ):
+        self._json_path: Path = json_path
+        self._default = default
+        self._do_sort: bool = do_sort
+        self._do_format: bool = do_format
+        self._indent = 2 if self._do_format else None
+
+        # Create folder structure if not exist
+        self._json_path.parent.mkdir(parents=True, exist_ok=True)
+        self.val: Any = default
+        self.load()
+
+    def save(self):
+        if self._do_sort:
+            self.val = sorted(self.val)
+        try:
+            with open(self._json_path, "w") as file_stream:
+                json.dump(self.val, file_stream, indent=self._indent)
+        except Exception:
+            print(
+                f"{self._json_path} cannot be written to (unseriablizeable/insufficient access)"
+            )
+
+    def load(self):
+        if not self._json_path.is_file():
+            self.save()
+            return
+        try:
+            with open(self._json_path, "r") as file_stream:
+                self.val = json.load(file_stream)
+        except Exception:
+            print(f"{self._json_path} malformed or missing")
+
+
+class FileBasedDict(FileBasedData):
+    def __init__(
+        self,
+        json_path: Path,
+        default: Dict = {},
+        do_sort: bool = True,
+        do_format: bool = True,
+    ):
+        super().__init__(json_path, default, do_sort, do_format)
+        self.val: Dict
+
+
+class MainBotConfig:
+    # ===START STATE-LIKE VARIABLES==#
+    # These are written to and read throughout operation
     action_queue: List[ActionQueueItem] = []
     action_running = False
+    audio_muted = False
+    backpack_open = False
+
+    # False when sending OCR messages and haven't send /clear
+    chat_cleared_after_response = True
+
+    chat_last_non_idle_time = time()
+    chat_messages_in_memory: List[Dict] = []
+    chat_ocr_active = False
+    chat_ocr_activation_queued = False  # True when ocr_active False, but queued
+    chat_ocr_ready = True  # Ready for another OCR loop (False when OCR loop running)
+    chat_start_ocr_time = time()
+
+    # Character button Y (Use OCR once, set the height, use height every time after)
+    character_select_screen_height_to_click = 0
+
+    crashed = False
+    collisions_disabled = True
+    game_update_timestamp = ""
+    # ===END STATE-LIKE VARIABLES===#
+
+    resources_path = Path.cwd().parent / "resources"
+    output_path = Path.cwd().parent / "output"
+    screen_res = (
+        {  # TODO: Don't use globals, make class-based # 2022-08-19: What did this mean?
+            "width": get_monitor_size()[0],
+            "height": get_monitor_size()[1],
+            "x_multi": get_monitor_size()[0] / 2560,
+            "y_multi": get_monitor_size()[1] / 1440,
+            "center_x_float": get_monitor_size()[0] / 2,
+            "center_y_float": get_monitor_size()[1] / 2,
+            "center_x": int(get_monitor_size()[0] / 2),
+            "center_y": int(get_monitor_size()[1] / 2),
+            "mss_monitor": mss().monitors[-1],
+        }
+    )
+
     advertisement = [
         "You can control this bot live! Search for 'Become Fumo' on Twitch, or go to the website:",
         '"fumboc.live"',
     ]
-    birthday_advertisement = [
-        "It's this bot's birthday! Search for 'Become Fumo' on Twitch, or go to the website:",
-        '"fumboc.live"',
-    ]
-    audio_muted = False
+    # Birthday Advert
+    epoch_time = 1616817600  # 2021-03-27 00:00:00
+    days_since_creation = floor((time() - epoch_time) / (60 * 60 * 24))
+    if days_since_creation % 365 == 0:
+        advertisement = [
+            "It's this bot's birthday! Search for 'Become Fumo' on Twitch, or go to the website:",
+            '"fumboc.live"',
+        ]
+
     backpack_button_position = (0.87, 0.89)
     backpack_item_positions = {
         1: {"x": 0.26, "y": 0.35},
@@ -93,13 +186,15 @@ class MainBotConfig:
         7: {"x": 0.56, "y": 0.6},
         8: {"x": 0.71, "y": 0.6},
     }
-    backpack_open = False
-    browser_driver_executable_name = "chromedriver.exe"
-    browser_driver_path = resources_path / browser_driver_executable_name
+    selenium_path = resources_path / "selenium"
+    selenium_path.mkdir(parents=True, exist_ok=True)
+    browser_profile_path = selenium_path / ".browser_profile"
+    browser_profile_path.mkdir(parents=True, exist_ok=True)
+
+    browser_driver_executable_name = os.getenv("CHROME_DRIVER_EXE", "chromedriver.exe")
+    browser_driver_path = selenium_path / browser_driver_executable_name
     browser_executable_name = "chrome.exe"
-    browser_profile_path = resources_path / ".browser_profile"
-    Path(browser_profile_path).mkdir(parents=True, exist_ok=True)
-    browser_cookies_path = browser_profile_path / "browser_cookies.json"
+    browser_cookies_path = selenium_path / "browser_cookies.json"
 
     chat_bracket_like_chars = ["|", "!", "l", "I"]
     chat_bracket_like_chars_left = chat_bracket_like_chars + ["[", "{", "("]
@@ -118,9 +213,6 @@ class MainBotConfig:
         pass  # TODO: figure out db-exists exception
 
     chat_block_functions = ["anti_afk"]
-    chat_cleared_after_response = (
-        True  # False when sending OCR messages and haven't send /clear
-    )
     chat_dimensions = screen_res["mss_monitor"].copy()
     chat_dimensions["top"] = int(screen_res["height"] * 0.05)
     chat_dimensions["width"] = int(screen_res["width"] * 0.29)
@@ -134,13 +226,12 @@ class MainBotConfig:
         "check_for_better_server",
         "activate_ocr",
     ]
-    chat_last_non_idle_time = time()
-    chat_message_corrections = {"[e": "/e"}
-    chat_messages_in_memory: List[Dict] = []
-    chat_ocr_active = False
-    chat_ocr_activation_queued = False  # True when ocr_active False, but queued
-    chat_ocr_ready = True  # Ready for another OCR loop (False when OCR loop running)
-    chat_start_ocr_time = time()
+
+    chat_overrides = {
+        "twitch": "t witch",
+        "Twitch": "T witch",
+        "BecomeFumo": "BecomeF umo",
+    }
 
     # Chat Whitelist
     chat_whitelist_resource_path = resources_path / "chat_whitelist"
@@ -175,48 +266,31 @@ class MainBotConfig:
         except Exception:
             print(f"{dataset_file} malformed or missing")
 
+    # TODO: Move chat_nicknames to whitelist
+    chat_nicknames = FileBasedDict(Path(chat_whitelist_resource_path, "nicknames.json"))
+
+    nicknames_whitelist = set(chat_nicknames.val.keys()).union(
+        set(chat_nicknames.val.values())
+    )  # If they have a nick, both their new and original names were approved. Add both to the whitelist.
+    chat_whitelist_datasets["nicknames"] = nicknames_whitelist
+
     # Character Select
     character_select_button_position = {"x": screen_res["center_x"], "y": 40}
     character_select_scroll_position = {
         "x": screen_res["center_x"],
         "y": screen_res["center_y"],
     }
-    character_select_scroll_down_amount = 0
-    character_select_scroll_down_scale = -200
-    character_select_screen_height_to_click = 0
-    character_select_scroll_speed = 0.2
-
-    character_select_initial = "BenBen"
+    character_select_initial = "BenBen"  # Character visible onscreen after cold boot
     character_select_desired = "Momiji"
-    character_select_width = 0.28
-    character_select_button_height = 0.035
     character_select_scan_attempts = 1
     character_select_max_scroll_attempts = 100
+    # Max times to try opening/closing charselect
     character_select_max_close_attempts = 10
-    character_select_max_click_attempts = 10
-
-    try:
-        with open(OBS.output_folder / "character_select.json", "r") as f:
-            prev_char_select = json.load(f)
-        character_select_screen_height_to_click = prev_char_select[
-            "desired_character_height"
-        ]
-        character_select_scroll_down_amount = prev_char_select["scroll_amount"]
-    except Exception:
-        print(f"{OBS.output_folder / 'character_select.json'} malformed or missing")
 
     chat_name_sleep_factor = (
         0.05  # Seconds to wait per char in users name before sending their message
     )
 
-    crashed = False
-
-    collisions_disabled = True
-
-    chat_overrides = {} # Historically redacted
-    current_emote = "/e dance3"
-    event_timer_running = False
-    epoch_time = 1616817600
     disable_collisions_on_spawn = True
     game_executable_name = "RobloxPlayerBeta.exe"
     game_id = 6238705697
@@ -231,7 +305,6 @@ class MainBotConfig:
     )
 
     game_update_file = OBS.output_folder / "last_game_update.json"
-    game_update_timestamp = ""
     try:
         with open(game_update_file, "r") as f:
             game_update_timestamp = json.load(f)
@@ -239,6 +312,7 @@ class MainBotConfig:
         print(f"{game_update_file} malformed or missing")
 
     help_url = os.getenv("HELP_URL")
+    help_msg = f"Popular commands are '!m hello', '!move w 2', and '!nav shrimp'! Visit {help_url} for all commands."
 
     max_attempts_better_server = 20
     max_attempts_character_selection = 30
@@ -260,7 +334,7 @@ class MainBotConfig:
         "shrimp": {"name": "Shrimp Tree"},
         "ratcade": {"name": "Ratcade"},
         "train": {"name": "Train Station"},
-        "classic": {"name": "'BecomeF umo: Classic' Portal"},
+        "classic": {"name": "'BecomeFumo: Classic' Portal"},
         "treehouse": {"name": "Funky Treehouse"},
         "beach": {"name": "Beach"},
         "miko": {"name": "Miko Borgar"},
@@ -270,6 +344,11 @@ class MainBotConfig:
         "train": 30,
         "miko": 0,
     }
+
+    new_user_msg = (
+        "Welcome, {user_mention}! This is a bot you can control with chat commands."
+    )
+
     player_id = os.getenv("PLAYER_ID")
     player_switch_cap = 50
     player_difference_to_switch = 15
@@ -278,20 +357,8 @@ class MainBotConfig:
     )
     respawn_character_select_offset = 0.1
 
-    regex_alpha = re_compile("[^a-zA-Z]")
-
-    settings_menu_image_path = os.path.join(resources_path, "gear.jpg")
-    settings_menu_width = 0.3
     settings_menu_grief_text = "grief"
     settings_menu_grief_label = "Anti-Grief"
-
-    settings_menu_positions = {}
-    settings_menu_positions_path = OBS.output_folder / "settings_menu_positions.json"
-    try:
-        with open(settings_menu_positions_path, "r") as f:
-            settings_menu_positions = json.load(f)
-    except Exception:
-        print(f"{settings_menu_positions_path} malformed or missing")
 
     settings_button_position = {
         "x": screen_res["center_x"],
@@ -300,20 +367,22 @@ class MainBotConfig:
     settings_menu_max_find_attempts = 3
     settings_menu_find_threshold = 0.50
     settings_menu_max_click_attempts = 2
-    settings_menu_button_height = 0.065
     settings_menu_ocr_max_attempts = 2
 
     sit_button_position = (0.79, 0.89)
     sitting_status = False
 
     taunt_button_position = (0.73, 0.89)
-    twitch_blacklist = []
-    twitch_blacklist_path = OBS.output_folder / "twitch_blacklist.json"
+
+    twitch_user_blacklist_path = OBS.output_folder / "twitch_blacklist.json"
+    twitch_user_blacklist = (
+        []
+    )  # Users who have not been banned, but are unable to use the bot
     try:
-        with open(str(twitch_blacklist_path), "r") as f:
-            twitch_blacklist = json.load(f)
+        with open(str(twitch_user_blacklist_path), "r") as f:
+            twitch_user_blacklist = json.load(f)
     except Exception:
-        print(f"{twitch_blacklist_path} malformed or missing")
+        print(f"{twitch_user_blacklist_path} malformed or missing")
 
     twitch_chatters = set()
     twitch_chatters_path = OBS.output_folder / "twitch_chatters.json"
@@ -340,13 +409,9 @@ class MainBotConfig:
     except Exception:
         print(f"{twitch_chatters_path} malformed or missing")
 
-    updates_url = os.getenv("HASHNODE_UPDATES_URL")
-
     sound_control_executable_name = "SoundVolumeView.exe"
     vlc_path = Path("C:\\", "Program Files", "VideoLAN", "VLC")
     vlc_executable_name = "vlc.exe"
-
-    vip_twitch_names = [] # Historically redacted
 
     # Window area for settings menu
     window_settings = screen_res["mss_monitor"].copy()

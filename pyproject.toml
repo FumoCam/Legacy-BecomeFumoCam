@@ -5,47 +5,32 @@ description = ""
 authors = [""]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.11"
-# Allow reading .env file
-python-dotenv = "^0.19.2"
-# Twitch communication wrapper
-twitchio = "^2.1.3"
-# Game API Queries
-requests = "^2.26.0"
-# Game launcher
-selenium = "^4.1.0"
-# Temperature Monitoring
-psutil = "^5.8.0"
-pythonnet = {path = "resources/pythonnet/pythonnet-3.0.0.dev1-py3-none-any.whl"}
-# Hardware-Driven Input Emulation (Arduino)
-pyserial = "^3.5"
-# Software-Driven Input Emulation
-PyAutoGUI = "^0.9.53"
-PyDirectInput = "^1.0.4"
-PyGetWindow = "^0.0.9"
-# Computer Vision
-mss = "^6.1.0"
-opencv-python = "^4.5.4"
-pytesseract = "^0.3.8"
-imutils = "^0.5.4"
-# Dependency security patches
-aiohttp = "^3.7.4"
-# HTML parsing for updates
-lxml = "^4.9.1"
-Levenshtein = "^0.16.0"
-websockets = "^10.3"
+python = "^3.10"
+python-dotenv = "^0.20.0" # Allow reading .env file
+twitchio = "^2.4.0" # Twitch communication wrapper
+requests = "^2.28.1" # Game API queries
+selenium = "^4.4.3" # Game launcher
+psutil = "^5.9.1" # TODO: Remove, ONLY uses process_iter for `is_process_running`
+pyserial = "^3.5" # Hardware-Driven Input Emulation (Arduino)
+PyAutoGUI = "^0.9.53" # TODO: Remove, ONLY uses get_mouse_position and get_monitor_size
+PyDirectInput = "^1.0.4" # Software-Driven Input Emulation
+PyGetWindow = "^0.0.9" # TODO: ONLY for check_active and get_open_windows, potentially replaceable with win32 api, see sbfcam
+mss = "^6.1.0" # Take inexpensive screenshots
+opencv-python = "^4.6.0" # Computervision
+pytesseract = "^0.3.10" # OCR
+Levenshtein = "^0.20.2" # Used for fuzzy-matching text (specifically, in OCR)
+websockets = "^10.3" # HUD
 
 [tool.poetry.dev-dependencies]
-black = "^21.12b0"
-bandit = "^1.7.1"
-flake8 = "^4.0.1"
+black = "^22.6.0"
+bandit = "^1.7.4"
+flake8 = "^5.0.4"
 isort = "^5.10.1"
-liccheck = "^0.6.4"
-mypy = "^0.910"
+mypy = "^0.971"
 ossaudit = "^0.5.0"
-types-psutil = "^5.8.15"
-types-requests = "^2.26.1"
-types-selenium = "^3.141.4"
+types-psutil = "^5.9.5"
+types-requests = "^2.28.9"
+types-selenium = "^3.141.9"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -56,10 +41,9 @@ src_paths=["src"]
 profile = "black"
 known_first_party="ai.chat_logic"
 
-
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 
 [[tool.mypy.overrides]]
-module = ["pytesseract.*", "mss.*", "pyautogui.*", "pydirectinput.*", "pygetwindow.*", "serial.*", "cv2.*", "imutils.*", "twitchio.*", "clr.*", "lxml.*", "Levenshtein.*", "ai.*"]
+module = ["ai.*", "twitchio.*", "serial.*", "pyautogui.*", "pydirectinput.*", "pygetwindow.*", "mss.*", "cv2.*", "pytesseract.*", "Levenshtein.*", ]
 ignore_missing_imports = true

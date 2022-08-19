@@ -387,7 +387,6 @@ async def ocr_for_character(character: str = "", click_option: bool = True) -> b
     last_ocr_text = None
     times_no_movement = 0
     found_character = False
-    scroll_amount = 0
     for attempts in range(CFG.character_select_max_scroll_attempts):
         if click_option:
             log(
@@ -435,7 +434,6 @@ async def ocr_for_character(character: str = "", click_option: bool = True) -> b
             break  # We reached the bottom of the list, OCR isnt changing
 
         ACFG.scrollMouse(1, down=True)
-        scroll_amount += 1
         sleep(0.4)
 
     if not found_character:
@@ -456,7 +454,6 @@ async def ocr_for_character(character: str = "", click_option: bool = True) -> b
     with open(OBS.output_folder / "character_select.json", "w") as f:
         json.dump(
             {
-                "scroll_amount": scroll_amount,
                 "desired_character_height": desired_character_height,
             },
             f,
@@ -464,7 +461,6 @@ async def ocr_for_character(character: str = "", click_option: bool = True) -> b
 
     CFG.character_select_screen_height_to_click = desired_character_height
 
-    CFG.character_select_scroll_down_amount = scroll_amount
     ACFG.moveMouseAbsolute(
         x=CFG.screen_res["center_x"], y=int(desired_character_height)
     )
@@ -563,7 +559,7 @@ async def check_if_game_loaded() -> bool:
 
 async def close_login_message():
     # 2022-07-11 login-message hotfix
-    check_active()
+    await check_active()
     sleep(2)
     target_x = 1040
     target_y = 100

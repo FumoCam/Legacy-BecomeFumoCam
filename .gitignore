@@ -1,6 +1,8 @@
 # Project Files
 output/
-resources/.browser_profile
+resources/selenium/.browser_profile/
+resources/selenium/browser_cookies.json
+resources/selenium/*.exe
 resources/hud/fonts/
 resources/SoundVolumeView.cfg
 src/ai/
