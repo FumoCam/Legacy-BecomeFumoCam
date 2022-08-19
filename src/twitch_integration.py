@@ -1,3 +1,4 @@
+import asyncio
 import json
 import traceback
 from asyncio import create_task
@@ -6,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from math import floor
 from os import getenv, system
-from time import strftime, time
+from time import time
 from typing import Union
 
 from requests import get, post
@@ -18,14 +19,14 @@ from twitchio.ext import commands, routines
 import chat_whitelist
 from chat_ocr import can_activate_ocr, do_chat_ocr
 from config import ActionQueueItem, Twitch
-from health import CFG, do_crash_check
+from health import CFG, do_crash_check, get_hw_stats
+from hw_stats import hw_update_loop, ws_init
 from utilities import (
     discord_log,
     error_log,
     log,
     log_process,
     notify_admin,
-    output_log,
     username_whitelist_request,
     whitelist_request,
 )
@@ -51,6 +52,7 @@ class TwitchBot(commands.Bot):
         print(f'[Twitch] Logged in as "{self.nick}"')
         await CFG.async_main()
         await self.run_subroutines()
+        await asyncio.gather(ws_init(), hw_update_loop(), async_twitch_main())
 
     async def event_message(self, message: TwitchMessage):
         if message.echo:
@@ -800,11 +802,14 @@ async def routine_check_better_server():
         error_log(traceback.format_exc())
 
 
-@routines.routine(seconds=1, wait_first=True)
+@routines.routine(minutes=1, wait_first=True)
 async def routine_clock():
-    current_time = strftime("%I:%M:%S%p EST")
     CFG.days_since_creation = floor((time() - CFG.epoch_time) / (60 * 60 * 24))
-    output_log("clock", f"Day {CFG.days_since_creation}\n{current_time}")
+
+
+@routines.routine(seconds=1)
+async def routine_hw_stats():
+    await get_hw_stats()
 
 
 @routines.routine(seconds=1, wait_first=True)
@@ -873,7 +878,10 @@ async def routine_crash_check():
         error_log(traceback.format_exc())
 
 
-def check_for_game_updates() -> Union[None, str]:
+def get_gamemode_update_timestamp() -> Union[None, str]:
+    """
+    Queries the Roblox API for the gamemode, returns latest-update timestamp
+    """
     UNIVERSE_ID = 2291704236
     API_URL = "https://games.roblox.com/v1/games"
     try:
@@ -887,7 +895,11 @@ def check_for_game_updates() -> Union[None, str]:
         response_result = response.json()
         data = response_result.get("data", [{}])[0]
         if "updated" in data:
-            return data["updated"]
+            timestamp = data["updated"]
+            # HACK: timestamp suffix can vary for no reason
+            # https://i.imgur.com/jEPZWKz.png
+            truncated_timestamp = timestamp.rsplit(".", 1)[0]
+            return truncated_timestamp
 
     try:
         readable_response = json.dumps(json.loads(response.text), indent=4)
@@ -900,8 +912,11 @@ def check_for_game_updates() -> Union[None, str]:
 
 @routines.routine(seconds=30)
 async def routine_monitor_game_updates():
+    """
+    Monitors updates to the gamemode and notifies if a new update has happened
+    """
     print("[Checking for game updates]")
-    last_update = check_for_game_updates()
+    last_update = get_gamemode_update_timestamp()
     if last_update is None or CFG.game_update_timestamp == last_update:
         # API failed or the game hasn't been updated, so we don't care
         print("[No game updates found]")
@@ -920,6 +935,19 @@ async def routine_monitor_game_updates():
         print(err)
     else:
         print("[Update notification sent]")
+
+
+async def async_twitch_main():
+    token = getenv("TWITCH_BOT_TOKEN")
+    channel = Twitch.channel_name
+    bot = TwitchBot(token, channel)
+    # await bot.start()
+    # try:
+    #     await bot.connect()
+    #     await bot._closing.wait()
+    # finally:
+    #     if not bot._closing.is_set():
+    #         await bot.close()
 
 
 def twitch_main():

@@ -1,0 +1,30 @@
+# Items not in version control that need to be here:
+- autoaimon.mp3
+- fonts/
+    - arame/
+        - Arame.ttf
+        - Arame-Bold.ttf
+        - ArameMono.ttf
+        - ArameMono-Bold.ttf
+        - ArameMono-Stencil.ttf
+        - ArameMono-Thin.ttf
+        - Arame-Stencil.ttf
+        - Arame-Thin.ttf
+    - droidsans/
+        - DroidSansMono.ttf
+        - license.txt
+    - redhat/
+        - RedHatDisplay-Black.otf
+        - RedHatDisplay-BlackItalic.otf
+        - RedHatDisplay-BoldItalic.otf
+        - RedHatDisplay-Italic.otf
+        - RedHatDisplay-Medium.otf
+        - RedHatDisplay-MediumItalic.otf
+        - RedHatDisplay-Regular.otf
+        - RedHatText-Bold.otf
+        - RedHatText-BoldItalic.otf
+        - RedHatText-Italic.otf
+        - RedHatText-Medium.otf
+        - RedHatText-MediumItalic.otf
+        - RedHatText-Regular.otf
+        - SIL Open Font License.txt

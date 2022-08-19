@@ -904,6 +904,10 @@ async def force_respawn_character():
     log_process("")
 
 
+async def get_hw_stats():
+    pass
+
+
 if __name__ == "__main__":
     import asyncio
 

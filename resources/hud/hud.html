@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta
+      name="viewport"
+      content="width=720, height=1280, initial-scale=1, user-scalable=no"
+    />
+    <link rel="stylesheet" type="text/css" href="./main.css" />
+    <link rel="stylesheet" type="text/css" href="./animations.css" />
+    <script type="text/javascript" defer src="./script.js"></script>
+    <!-- <script defer>
+      window.onload = (event) => {
+        show_timed_popup("LAUNCHING SELENIUM", 3);
+        setTimeout(function () {
+          show_timed_popup("CHECKING FOR BETTER SERVER", 3);
+        }, 2000);
+      };
+    </script> -->
+  </head>
+  <body>
+    <div id="relative-main-container">
+      <div id="flex-main-container">
+        <!-- <div class="big-popup-container anim-ping-popup" id="test-ping">
+        <div class="popup-row">
+          <div class="default-type">PING RECEIVED</div>
+        </div>-->
+        <div
+          class="anim-alert-red"
+          id="hud-connection-loss"
+          style="visibility: hidden"
+        >
+          HUD CONNECTION LOST
+        </div>
+        <div
+          class="anim-stepped-blink"
+          id="system-error"
+          style="visibility: hidden"
+        >
+          SYSTEM ERROR
+        </div>
+      </div>
+      <div id="update-container" class="anim-grow">
+        <div id="update-title-container">
+          <span id="update-label">UPDATE LOG</span>
+          <span id="update-date">2022-08-17</span>
+        </div>
+        <div id="update-list-container">
+          <ul id="update-list"></ul>
+        </div>
+      </div>
+      <div id="help-container" class="anim-shrink">
+        <span id="help-label">TWITCH COMMANDS:</span>
+        <span id="help-value">!help</span>
+      </div>
+      <div id="bottom-right-container">
+        <div id="date-version-container">
+          <div id="date-text">
+            <span id="date-label">DAY </span><span id="date-value">###</span>
+          </div>
+          <div id="version-text">
+            <span id="version-label">v</span><span id="version-value">##</span>
+          </div>
+        </div>
+        <div id="clock-container">
+          <span id="clock-text">##:##:## XX</span
+          ><span id="clock-timezone"> EST</span>
+        </div>
+        <div id="hw-stats-container">
+          <div id="hw-stats-cpu-temp">
+            <span id="hw-stats-cpu-temp-label">TEMP: </span
+            ><span id="hw-stats-cpu-temp-value">---</span
+            ><span id="hw-stats-cpu-temp-unit">C&deg;</span>
+          </div>
+          <div id="hw-stats-cpu-load">
+            <span id="hw-stats-cpu-load-label">LOAD: </span
+            ><span id="hw-stats-cpu-load-value">---</span
+            ><span id="hw-stats-cpu-load-unit">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,6 +1,7 @@
 # Project Files
 output/
 resources/.browser_profile
+resources/hud/fonts/
 resources/SoundVolumeView.cfg
 src/ai/
 

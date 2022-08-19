@@ -33,6 +33,7 @@ aiohttp = "^3.7.4"
 # HTML parsing for updates
 lxml = "^4.9.1"
 Levenshtein = "^0.16.0"
+websockets = "^10.3"
 
 [tool.poetry.dev-dependencies]
 black = "^21.12b0"
