@@ -223,7 +223,10 @@ def notify_admin(message: str) -> bool:
     if webhook_url is None:
         return False
     webhook_data = {
-        "content": f"<@{os.getenv('DISCORD_OWNER_ID')}>\n{message}\n<https://twitch.tv/{os.getenv('TWITCH_CHAT_CHANNEL')}>",
+        "content": (
+            f"<@{os.getenv('DISCORD_OWNER_ID')}>\n{message}\n"
+            f"<https://twitch.tv/{os.getenv('TWITCH_CHAT_CHANNEL')}>"
+        ),
     }
     result = post(webhook_url, json=webhook_data)
     try:
@@ -278,7 +281,10 @@ def whitelist_request(
         if is_username_req
         else f"__Whitelist Request from {username}__"
     )
-    header_content = f"** **\n** **\n{message_title}\n```{message}```\n<{user_url}>\n<https://twitch.tv/{os.getenv('TWITCH_CHAT_CHANNEL')}>\n** **"
+    header_content = (
+        f"** **\n** **\n{message_title}\n```{message}```\n<{user_url}>\n"
+        f"<https://twitch.tv/{os.getenv('TWITCH_CHAT_CHANNEL')}>\n** **"
+    )
     webhook_username = (
         "User Whitelist Request" if is_username_req else "Word Whitelist Request"
     )
