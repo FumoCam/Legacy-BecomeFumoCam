@@ -1,28 +1,25 @@
-# FumoCam
+# About
 
-A 24/7, interactive, in-game Twitch bot ran for over a year, amassing 5,000+ followers by itself.
+A 24/7, interactive, in-game Twitch bot that has run for over a year, amassing 5,000+ followers by itself.
 
-Due to targeted attacks and Twitch staff not reviewing appeals/allowing fake reports, it no longer streams on the original channel.
+Due to targeted report spam, and Twitch not reviewing appeals, it now streams to a second channel, to avoid the first being permanantly deleted (along with historical clips). 
 
 Original Channel: https://twitch.tv/becomefumocam
 
 # Writeup
 
-There has been too many drastic additions and removals of functionality since it was created to have an accurate, formal writeup.
+A semi-technical "intro" exists, but there has been too many drastic additions and removals of functionality since it was created to have an accurate, formal writeup.
 
-However, a semi-technical "intro" exists.
-
-Want to know why I made a bot for a game I dont play about a fandom I don't follow?
+***So, want to know why I made a bot for a game I dont play about a fandom I don't follow?***
 
 < HISTORICALLY_REDACTED >
 
-# Tesseract Data
+# Other Notes
+## Installation
+[A guide can be found in INSTRUCTIONS.md](INSTRUCTIONS.md), but its a rough guide that may change, and may not be easy to follow.
 
-Download the "tessdata_best" for Tesseract and replace your "tessdata" folder where you installed Tesseract (i.e. Program Files).
 
-https://github.com/tesseract-ocr/tessdata_best
-
-# Deprecated Software-Driven Input
+## Deprecated Software-Driven Input
 
 This has always been a project that aims to replicate a human as mechanically and programmatically as possible. Due to how the Windows scheduler works, there is no software that can be written, in any language, that adequately supports consistent input (for example, `!move w 1` always moving the exact same amount, no error margin).
 
@@ -32,12 +29,12 @@ Due to this, all precision keyboard and mouse input has been offloaded to an Ard
 
 Obviously, this requires external hardware (Arduino Leonardo) that not everyone can get. You can view the old code that used software-driven input emulation on the [pre-arduino branch](https://github.com/<HISTORICALLY_REDACTED>).
 
-# Deprecated Exploit Functionality
+## Deprecated Exploit Functionality
 
-For advanced commands like teleportation, use of a third party Lua injector is required (alongside some code).
+Older commands like teleportation required the use of a third party Lua injector is required (alongside some code).
 
-This can lead to system instability and is challenging to develop around, so it has been deprecated.
+This led to system instability, was challenging to develop around, and was ultimately a crutch to the final goal, so it was deprecated.
 
 You can view the old code that still supported injector commands on the [injector support branch](https://github.com/<HISTORICALLY_REDACTED>).
 
-In addition, it needs the injector module to be extracted into the project at the "resources/injector" path. You can find the injector here: < HISTORICALLY REDACTED >
+In addition, it needs the injector module (No longer functional) to be extracted into the project at the "resources/injector" path. You can find the injector here: < HISTORICALLY REDACTED >
