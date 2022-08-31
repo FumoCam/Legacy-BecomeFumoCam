@@ -239,6 +239,7 @@ class MainBotConfig:
         "dictionary": chat_whitelist_resource_path / "dictionary.json",
         "blacklist": chat_whitelist_resource_path / "blacklist.json",
         "custom": chat_whitelist_resource_path / "custom.json",
+        "custom_old": chat_whitelist_resource_path / "custom_old.json",
         "random_prefixes": chat_whitelist_resource_path / "random_prefixes.json",
         "random_suffixes": chat_whitelist_resource_path / "random_suffixes.json",
         "trusted_usernames": chat_whitelist_resource_path / "trusted_usernames.json",

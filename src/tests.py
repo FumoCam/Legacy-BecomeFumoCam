@@ -281,7 +281,7 @@ def test_get_player_token():
 def test_censor():
     async def test():
         blacklisted_words, censored_string = get_censored_string(
-            CFG, "death", debug=True
+            CFG, "Somethingless", debug=True
         )
         print(f"Blacklisted words: [{','.join(blacklisted_words)}]")
         print(f"Censored string: '{censored_string}'")

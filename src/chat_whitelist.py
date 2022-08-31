@@ -10,10 +10,13 @@ def user_is_trusted(CFG: MainBotConfig, username):
 def word_in_whitelists(CFG: MainBotConfig, word):
     # Order of max expected size, least to greatest
     return (
-        word in CFG.chat_whitelist_datasets["trusted_usernames"]
+        word in CFG.chat_whitelist_datasets["custom"]
+        or word in CFG.chat_whitelist_datasets["random_prefixes"]
+        or word in CFG.chat_whitelist_datasets["random_suffixes"]
+        or word in CFG.chat_whitelist_datasets["trusted_usernames"]
         or word in CFG.chat_whitelist_datasets["usernames"]
         or word in CFG.chat_whitelist_datasets["whitelist_data"]
-        or word in CFG.chat_whitelist_datasets["custom"]
+        or word in CFG.chat_whitelist_datasets["custom_old"]
         or word in CFG.chat_whitelist_datasets["dictionary"]
     )
 
@@ -74,11 +77,46 @@ def get_censored_string(
             censored_string_assembly.append(space_bypassed_censored)
             space_bypassed_string = ""  # Clear space bypass buffer
 
-        if clean_word.strip() != "" and not (
-            word_in_whitelists(CFG, clean_word.lower())
-        ):
-            suffix_removal_success = False
-            if len(clean_word) >= 3:
+        not_empty_or_in_whitelists = (
+            clean_word.strip() != "" and not word_in_whitelists(CFG, clean_word.lower())
+        )
+
+        # Handle mentions of temp usernames
+        is_temp_name = False
+        if not_empty_or_in_whitelists:
+            clean_word_lower = clean_word.lower()
+            for prefix in CFG.chat_whitelist_datasets["random_prefixes"]:
+                if clean_word_lower.startswith(prefix):
+                    potential_suffix = clean_word_lower.replace(prefix, "", 1).strip()
+                    # No handling of anything other than the exact phrase, yet
+                    if (
+                        potential_suffix
+                        in CFG.chat_whitelist_datasets["random_suffixes"]
+                    ):
+                        is_temp_name = True
+                        break
+
+        if not is_temp_name and not_empty_or_in_whitelists:
+            # Attempt to remove common suffixes (plurals, possessive) and check the whitelist after
+            good_with_suffix_change = False
+            common_added_suffixes = {"s", "ve", "d", "less"}
+            for suffix in common_added_suffixes:
+                truncated_word = clean_word.removesuffix(suffix)
+                if truncated_word != clean_word:
+                    if word_in_whitelists(CFG, truncated_word.lower()):
+                        good_with_suffix_change = True
+                        break
+
+            # Attempt to add common suffixes ('g' to 'makin') and check the whitelist after
+            common_removed_suffixes = {"g"}
+            for suffix in common_removed_suffixes:
+                supplemented_word = f"{clean_word}{suffix}"
+                if word_in_whitelists(CFG, supplemented_word.lower()):
+                    good_with_suffix_change = True
+                    break
+
+            suffix_was_duplicated = False
+            if len(clean_word) >= 3 and not good_with_suffix_change:
                 print_if_debug(f"cleanword_suffix_check: {clean_word} ({word})", debug)
                 # Allow suffix-extended characters, like "testtttttttttttttttt" qualifying as "test"
                 offset = 1
@@ -88,12 +126,14 @@ def get_censored_string(
                     print(word_attempt)
                     if word_in_whitelists(CFG, word_attempt):
                         clean_word = word
-                        suffix_removal_success = True
+                        suffix_was_duplicated = True
                         break
                     offset += 1
                     index = len(clean_word) - offset
 
-            if not suffix_removal_success or len(clean_word) < 3:
+            if not good_with_suffix_change and (
+                not suffix_was_duplicated or len(clean_word) < 3
+            ):
                 print_if_debug(f"blacklist_action: {clean_word} ({word})", debug)
                 blacklisted_words.append(clean_word.lower())
                 previous_asterisks = original_word.count("*")

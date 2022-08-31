@@ -51,13 +51,6 @@ class TwitchBot(commands.Bot):
         if message.echo:
             return
 
-        # Send a greeting + help message if new user
-        if await self.is_new_user(message.author.name):
-            await message.channel.send(
-                CFG.new_user_msg.format(user_mention=message.author.mention)
-            )
-            await message.channel.send(CFG.help_msg)
-
         # Log message
         log_task = create_task(self.do_discord_log(message))
         try:
@@ -65,6 +58,16 @@ class TwitchBot(commands.Bot):
         except Exception:
             print(traceback.format_exc())
             notify_admin(f"```{traceback.format_exc()}```")
+
+        # Send a greeting + help message if new user
+        if await self.is_new_user(message.author.name):
+            new_user_msg = CFG.new_user_msg.format(user_mention=message.author.mention)
+            await message.channel.send(new_user_msg)
+            await message.channel.send(CFG.help_msg)
+
+            if message.content.lower().startswith("!help"):
+                # Do not process the command: Help is sent if they're first-time chatters
+                return
 
         # Execute task
         commands_task = create_task(self.handle_commands(message))
@@ -551,6 +554,31 @@ class TwitchBot(commands.Bot):
                 },
             )
         await self.do_discord_log(ctx.message, is_chat=True)
+        await CFG.add_action_queue(action)
+
+    @commands.command()  # Send announcement in-game
+    async def a(self, ctx: commands.Context):
+        is_dev = await self.is_dev(ctx.message.author)
+        if not is_dev:
+            await ctx.send("[You do not have permission to announce.]")
+            return
+
+        args = await self.get_args(ctx)
+        if not args:
+            await ctx.send('[Please specify a message! (i.e. "!a Hello World!"]')
+            return
+
+        msg = " ".join(args)
+        msg = msg.capitalize()
+        if len(msg) > 100:
+            await ctx.send(
+                "[In-game character limit is 100! Please shorten your message.]"
+            )
+            return
+
+        await self.do_discord_log(ctx.message)
+
+        action = ActionQueueItem("chat", {"msgs": [f"[{msg}]"]})
         await CFG.add_action_queue(action)
 
     @commands.command()
