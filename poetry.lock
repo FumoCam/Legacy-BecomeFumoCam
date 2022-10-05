@@ -1,6 +1,6 @@
 [[package]]
 name = "aiohttp"
-version = "3.8.1"
+version = "3.8.3"
 description = "Async http client/server framework (asyncio)"
 category = "main"
 optional = false
@@ -2733,7 +2733,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "598c1b6caf64f7de5f77e18f721a5bb111f84dae32fadfd9f6d6c94062793e9f"
+content-hash = "3b253f119c5df0af3b3e17a3e43ed975777e92fe7a0b63e8cf85fd3faf1890be"
 
 [metadata.files]
 aiohttp = []

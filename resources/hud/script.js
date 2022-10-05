@@ -346,12 +346,11 @@ function update_loop(animation_speed_ms) {
 
 function changelog() {
   // START CHANGE-ME
-  const VERSION = 412;
-  const UPDATE_DATE = "2022-08-27";
+  const VERSION = 413;
+  const UPDATE_DATE = "2022-10-05";
   const UPDATE_ITEMS = [
-    "Moved FumoCam to a new machine, temperatures should be better",
-    "Cleaned up some old FumoCam code, upgraded to Python 3.10 and updated all dependencies",
-    "IF SOMETHING NO LONGER WORKS, PLEASE USE !dev",
+    "Added censor service prototype (to be shared with SBFCam).",
+    "IF THERE ARE ISSUES WITH CHAT, please use !dev.",
   ];
   // END CHANGE-ME
   animateNumericalValue(

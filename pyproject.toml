@@ -20,6 +20,7 @@ opencv-python = "^4.6.0" # Computervision
 pytesseract = "^0.3.10" # OCR
 Levenshtein = "^0.20.2" # Used for fuzzy-matching text (specifically, in OCR)
 websockets = "^10.3" # HUD
+aiohttp = "^3.8.3"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
