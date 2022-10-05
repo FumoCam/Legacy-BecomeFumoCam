@@ -5,6 +5,7 @@ from time import sleep
 import cv2 as cv
 import numpy as np
 import pyautogui
+from requests import get
 
 from actions import mute_toggle, respawn_character
 from arduino_integration import ACFG, CFG
@@ -376,6 +377,27 @@ def test_hw_stat():
     asyncio.get_event_loop().run_until_complete(do_test())
 
 
+def test_bare_roblox_api():
+    game_id = 7363647365
+    url = f"https://games.roblox.com/v1/games/{game_id}/servers/Public"
+    response = get(url, timeout=10)
+    if response.status_code == 200:
+        response_result = response.json()
+        servers = response_result["data"]
+        if len(servers) == 0:
+            print("No servers found")
+        else:
+            for server in servers:
+                print(server["id"])
+                print(server["playing"])
+                for token in server["playerTokens"]:
+                    print(token)
+                print("\n\n\n")
+    else:
+        print("Error with API")
+        print(response.text())
+
+
 if __name__ == "__main__":
     pyautogui.FAILSAFE = False
     # If account banned
@@ -383,7 +405,7 @@ if __name__ == "__main__":
     # test_character_select_full()
     # test_toggle_collisions()
     # test_check_for_better_server()
-    test_censor()
+    # test_censor()
     # test_move_mouse()
     # test_pitch()
     # test_loading_cookies_for_browser()
@@ -404,6 +426,7 @@ if __name__ == "__main__":
     # test_character_select()
     # test_character_select_full()
     # test_check_for_better_server()
+    test_bare_roblox_api()
     # test_character_select_full(click_mouse=True)
     # test_force_respawn()
     # test_toggle_collisions()

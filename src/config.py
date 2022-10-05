@@ -163,16 +163,16 @@ class MainBotConfig:
     )
 
     advertisement = [
-        "You can control this bot live! Search for 'Become Fumo' on Twitch, or go to the website:",
-        '"fumboc.live"',
+        "You can control this bot live!",
+        "Go to its Roblox profile and click the purple Twitch icon!",
     ]
     # Birthday Advert
     epoch_time = 1616817600  # 2021-03-27 00:00:00
     days_since_creation = floor((time() - epoch_time) / (60 * 60 * 24))
     if days_since_creation % 365 == 0:
         advertisement = [
-            "It's this bot's birthday! Search for 'Become Fumo' on Twitch, or go to the website:",
-            '"fumboc.live"',
+            "It's this bot's birthday!",
+            "Go to its Roblox profile and click the purple Twitch icon!",
         ]
 
     backpack_button_position = (0.87, 0.89)
@@ -317,7 +317,7 @@ class MainBotConfig:
 
     max_attempts_better_server = 20
     max_attempts_character_selection = 30
-    max_attempts_game_loaded = 50
+    max_attempts_game_loaded = 100
     max_attempts_sit_button = 3
     max_seconds_browser_launch = 20
 
