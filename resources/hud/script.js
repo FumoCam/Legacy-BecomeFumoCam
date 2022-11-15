@@ -346,11 +346,11 @@ function update_loop(animation_speed_ms) {
 
 function changelog() {
   // START CHANGE-ME
-  const VERSION = 413;
-  const UPDATE_DATE = "2022-10-05";
+  const VERSION = 414;
+  const UPDATE_DATE = "2022-11-15";
   const UPDATE_ITEMS = [
-    "Added censor service prototype (to be shared with SBFCam).",
-    "IF THERE ARE ISSUES WITH CHAT, please use !dev.",
+    "Updated code depenencies for security reasons.",
+    "IF THERE ARE MALFUNCTIONS, please use !dev.",
   ];
   // END CHANGE-ME
   animateNumericalValue(

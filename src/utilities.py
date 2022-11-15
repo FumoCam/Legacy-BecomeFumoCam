@@ -4,7 +4,7 @@ from math import floor
 from subprocess import call as call_proc  # nosec
 from time import sleep, strftime, time
 from traceback import format_exc
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from Levenshtein import ratio as lev_ratio
 from mss import mss
@@ -149,7 +149,9 @@ def kill_process(executable: str = "RobloxPlayerBeta.exe", force: bool = False):
 
 
 async def check_active(
-    title: str = "Roblox", title_ending: str = None, force_fullscreen: bool = True
+    title: str = "Roblox",
+    title_ending: Optional[str] = None,
+    force_fullscreen: bool = True,
 ) -> bool:
     print(f"[check_active] {title} | {title_ending}")
     active_window = getActiveWindow()
