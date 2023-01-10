@@ -3,6 +3,7 @@ from random import randint
 from time import sleep
 
 from arduino_integration import ACFG
+from config import ZOOM_FIRST_PERSON
 from utilities import log, log_process
 
 
@@ -70,8 +71,8 @@ def main_to_shrimp_tree():
         jump_delay=0.1,
         diagonal_direction_key="s",
     )
-    ACFG.zoom("i", 105)
-    ACFG.zoom("o", 105)
+    ACFG.zoom("i", ZOOM_FIRST_PERSON)
+    ACFG.zoom("o", ZOOM_FIRST_PERSON)
     ACFG.precision_look("left", 1798, raw=True)
     log_process("")
     log("")
@@ -88,8 +89,8 @@ def main_to_ratcade():
     ACFG.move("w", 0.95, raw=True)
     ACFG.move("d", 0.9, raw=True)
     ACFG.precision_look("left", 901, raw=True)
-    ACFG.zoom("i", 105)
-    ACFG.zoom("o", 105)
+    ACFG.zoom("i", ZOOM_FIRST_PERSON)
+    ACFG.zoom("o", ZOOM_FIRST_PERSON)
     ACFG.precision_look("right", 1798, raw=True)
     log_process("")
     log("")
@@ -107,8 +108,8 @@ def main_to_train():
     ACFG.leap(forward_time=0.3, jump_time=0.25, direction_key="a")
     ACFG.move("w", 1.05, raw=True)
     ACFG.precision_look("right", 901, raw=True)
-    ACFG.zoom("i", 105)
-    ACFG.zoom("o", 105)
+    ACFG.zoom("i", ZOOM_FIRST_PERSON)
+    ACFG.zoom("o", ZOOM_FIRST_PERSON)
     ACFG.precision_look("left", 1798, raw=True)
     log_process("")
     log("")
@@ -153,8 +154,8 @@ def classic_portal_to_slide():
     ACFG.move("d", 0.125, raw=True)
     ACFG.move("w", 2.270, raw=True)
     ACFG.precision_look("left", 901 + (901 / 2), raw=True)
-    ACFG.zoom("i", 105)
-    ACFG.zoom("o", 105)
+    ACFG.zoom("i", ZOOM_FIRST_PERSON)
+    ACFG.zoom("o", ZOOM_FIRST_PERSON)
     ACFG.precision_look("left", 1798, raw=True)
 
 
@@ -221,8 +222,8 @@ def treehouse_bench_to_treehouse():
     ACFG.leap(forward_time=0.4, jump_time=0.75, direction_key="a")
     ACFG.leap(forward_time=0.2, jump_time=0.3, direction_key="d", jump_delay=0.1)
     ACFG.precision_look("left", 1798, raw=True)
-    ACFG.zoom("i", 105)
-    ACFG.zoom("o", 105)
+    ACFG.zoom("i", ZOOM_FIRST_PERSON)
+    ACFG.zoom("o", ZOOM_FIRST_PERSON)
     ACFG.precision_look("left", 1798, raw=True)
 
     log_process("")

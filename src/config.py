@@ -120,6 +120,10 @@ class FileBasedDict(FileBasedData):
         self.val: Dict
 
 
+# TODO: Make constants nicer
+ZOOM_FIRST_PERSON = 140
+
+
 class MainBotConfig:
     # ===START STATE-LIKE VARIABLES==#
     # These are written to and read throughout operation

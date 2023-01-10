@@ -12,7 +12,7 @@ from selenium import webdriver
 
 from actions import respawn_character, send_chat
 from commands import ACFG, CFG
-from config import OBS, ActionQueueItem
+from config import OBS, ZOOM_FIRST_PERSON, ActionQueueItem
 from navpoints import (  # TODO: Make this better/scalable
     comedy_spawn_calibration,
     main_spawn_calibration,
@@ -638,7 +638,7 @@ async def auto_nav(
         await respawn_character(notify_chat=False)
         sleep(5)
     log("Zooming out to full scale")
-    ACFG.zoom(zoom_direction_key="o", amount=105)
+    ACFG.zoom(zoom_direction_key="o", amount=ZOOM_FIRST_PERSON)
 
     spawn = spawn_detection_main(CFG.resources_path, slow=slow_spawn_detect)
     if spawn == "ERROR":
@@ -659,7 +659,7 @@ async def auto_nav(
         await respawn_character(notify_chat=False)
         sleep(5)
         log("Zooming out to full scale")
-        ACFG.zoom(zoom_direction_key="o", amount=105)
+        ACFG.zoom(zoom_direction_key="o", amount=ZOOM_FIRST_PERSON)
         spawn = spawn_detection_main(CFG.resources_path, slow=slow_spawn_detect)
         respawn_attempts += 1
 
