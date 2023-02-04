@@ -1,3 +1,9 @@
+# A note about code quality
+This version of the bot was built from patches upon hacky solutions upon more patches. 
+
+Architecture, good coding practices, and maintainability was the lowest priority during development.
+
+A redesign is in progress.
 # About
 
 A 24/7, interactive, in-game Twitch bot that has run for over a year, amassing 5,000+ followers by itself.
@@ -12,13 +18,18 @@ A semi-technical "intro" exists, but there has been too many drastic additions a
 
 ***So, want to know why I made a bot for a game I dont play about a fandom I don't follow?***
 
-< HISTORICALLY_REDACTED >
+[https://fumocam.xyz/day-0-fumocam-beginnings](https://fumocam.xyz/day-0-fumocam-beginnings)
+
+# Installation
+1. You will see README.md files in some of the resource folders with "Items not in version control". 
+    - You can find these in the private [Legacy-BecomeFumoCam-Other-Resources](https://github.com/FumoCam/Legacy-BecomeFumoCam-Other-Resources) repository
+    - If you do not have access, you can request it from me.
+    - Alternatively, you can supply your own versions of the missing files, there is nothing extraordinarily unique.
+2. A setup guide can be found in [INSTRUCTIONS.md](INSTRUCTIONS.md)
+    - Its a very verbose guide, and is only updated on system wipes. 
+    - It may not be easy to follow or be up to date.
 
 # Other Notes
-## Installation
-[A guide can be found in INSTRUCTIONS.md](INSTRUCTIONS.md), but its a rough guide that may change, and may not be easy to follow.
-
-
 ## Deprecated Software-Driven Input
 
 This has always been a project that aims to replicate a human as mechanically and programmatically as possible. Due to how the Windows scheduler works, there is no software that can be written, in any language, that adequately supports consistent input (for example, `!move w 1` always moving the exact same amount, no error margin).
@@ -27,7 +38,7 @@ Linux could see negligible error margins, but still believed to have _some_ erro
 
 Due to this, all precision keyboard and mouse input has been offloaded to an Arduino Leonardo that can receive a payload, emulate HID Keyboard + Mouse natively (no hacky workarounds), and have consistent timing due to the nature of how close-to-metal the code is running (in addition, is not tethered to any OS scheduler but directly to CPU clock).
 
-Obviously, this requires external hardware (Arduino Leonardo) that not everyone can get. You can view the old code that used software-driven input emulation on the [pre-arduino branch](https://github.com/<HISTORICALLY_REDACTED>).
+Obviously, this requires external hardware (Arduino Leonardo) that not everyone can get. You can view the old code that used software-driven input emulation on the [pre-arduino tag](https://github.com/FumoCam/Legacy-BecomeFumoCam/releases/tag/no-arduino-movement).
 
 ## Deprecated Exploit Functionality
 
@@ -35,6 +46,8 @@ Older commands like teleportation required the use of a third party Lua injector
 
 This led to system instability, was challenging to develop around, and was ultimately a crutch to the final goal, so it was deprecated.
 
-You can view the old code that still supported injector commands on the [injector support branch](https://github.com/<HISTORICALLY_REDACTED>).
+You can view the old code that still supported injector commands on the [injector support tag](https://github.com/FumoCam/Legacy-BecomeFumoCam/releases/tag/injector-support).
 
-In addition, it needs the injector module (No longer functional) to be extracted into the project at the "resources/injector" path. You can find the injector here: < HISTORICALLY REDACTED >
+In addition, it needs the injector module (No longer functional) to be extracted into the project at the "resources/injector" path. You can find the injector here: 
+
+[https://github.com/FumoCam/Legacy-BecomeFumoCam-Injector](https://github.com/FumoCam/Legacy-BecomeFumoCam-Injector)
