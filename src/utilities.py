@@ -4,7 +4,7 @@ from math import floor
 from subprocess import call as call_proc  # nosec
 from time import sleep, strftime, time
 from traceback import format_exc
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional, Union
 
 from Levenshtein import ratio as lev_ratio
 from mss import mss
@@ -255,71 +255,6 @@ def notify_admin(message: str) -> bool:
                 print(f"[Logged Screenshot] {message}")
     except Exception:
         print(format_exc())
-
-    return True
-
-
-def username_whitelist_request(message, username):
-    return whitelist_request([username], message, username, is_username_req=True)
-
-
-def whitelist_request(
-    requests: List[str], message, username, is_username_req=False
-) -> bool:
-    env_key = (
-        "DISCORD_WEBHOOK_USERNAME_WHITELIST_CHANNEL"
-        if is_username_req
-        else "DISCORD_WEBHOOK_WORD_WHITELIST_CHANNEL"
-    )
-    webhook_url = os.getenv(env_key, None)
-    if webhook_url is None:
-        return False
-
-    user_url = f"https://twitch.tv/popout/{os.getenv('TWITCH_CHAT_CHANNEL')}/viewercard/{username.lower()}"
-    command = "!userwhitelist" if is_username_req else "!whitelist"
-    whitelist_text = [f"{command} {word}" for word in requests]
-    message_title = (
-        f"__Username Request__\n**{username}**"
-        if is_username_req
-        else f"__Whitelist Request from {username}__"
-    )
-    header_content = (
-        f"** **\n** **\n{message_title}\n```{message}```\n<{user_url}>\n"
-        f"<https://twitch.tv/{os.getenv('TWITCH_CHAT_CHANNEL')}>\n** **"
-    )
-    webhook_username = (
-        "User Whitelist Request" if is_username_req else "Word Whitelist Request"
-    )
-
-    webhook_data = {
-        "content": header_content,
-        "username": webhook_username,
-    }
-    result = post(webhook_url, json=webhook_data)
-    try:
-        result.raise_for_status()
-    except HTTPError as err:
-        print(err)
-    else:
-        print("[Whitelist request header sent]")
-
-    MAX_WORDS = 3
-    if len(whitelist_text) > MAX_WORDS:
-        # Make it into a single message, newline-seperated
-        whitelist_text = ["\n".join(whitelist_text)]
-
-    for word in whitelist_text:
-        webhook_data = {
-            "content": word,
-            "username": webhook_username,
-        }
-        result = post(webhook_url, json=webhook_data)
-        try:
-            result.raise_for_status()
-        except HTTPError as err:
-            print(err)
-        else:
-            print(f"[Whitelist request command sent ({word})]")
 
     return True
 

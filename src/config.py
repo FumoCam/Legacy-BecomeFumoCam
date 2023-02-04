@@ -4,7 +4,7 @@ import sqlite3
 from math import floor
 from pathlib import Path
 from time import time
-from typing import Any, Dict, List, Set
+from typing import Dict, List, Set
 
 from dotenv import dotenv_values, load_dotenv
 from mss import mss
@@ -55,69 +55,6 @@ class BlockedMouseRegion:
         self.y1 = y1
         self.x2 = x2
         self.y2 = y2
-
-
-def json_load_or_default(json_path: Path, default=None):
-    try:
-        with open(json_path, "r") as json_file_stream:
-            json_obj = json.load(json_file_stream)
-            return json_obj
-    except Exception:
-        print(f"{json_path} malformed or missing")
-        return default
-
-
-class FileBasedData:
-    def __init__(
-        self,
-        json_path: Path,
-        default: Any,
-        do_sort: bool = True,
-        do_format: bool = True,
-    ):
-        self._json_path: Path = json_path
-        self._default = default
-        self._do_sort: bool = do_sort
-        self._do_format: bool = do_format
-        self._indent = 2 if self._do_format else None
-
-        # Create folder structure if not exist
-        self._json_path.parent.mkdir(parents=True, exist_ok=True)
-        self.val: Any = default
-        self.load()
-
-    def save(self):
-        if self._do_sort:
-            self.val = sorted(self.val)
-        try:
-            with open(self._json_path, "w") as file_stream:
-                json.dump(self.val, file_stream, indent=self._indent)
-        except Exception:
-            print(
-                f"{self._json_path} cannot be written to (unseriablizeable/insufficient access)"
-            )
-
-    def load(self):
-        if not self._json_path.is_file():
-            self.save()
-            return
-        try:
-            with open(self._json_path, "r") as file_stream:
-                self.val = json.load(file_stream)
-        except Exception:
-            print(f"{self._json_path} malformed or missing")
-
-
-class FileBasedDict(FileBasedData):
-    def __init__(
-        self,
-        json_path: Path,
-        default: Dict = {},
-        do_sort: bool = True,
-        do_format: bool = True,
-    ):
-        super().__init__(json_path, default, do_sort, do_format)
-        self.val: Dict
 
 
 # TODO: Make constants nicer
@@ -236,48 +173,6 @@ class MainBotConfig:
         "Twitch": "T witch",
         "BecomeFumo": "BecomeF umo",
     }
-
-    # Chat Whitelist
-    chat_whitelist_resource_path = resources_path / "chat_whitelist"
-    chat_whitelist_dataset_paths = {
-        "dictionary": chat_whitelist_resource_path / "dictionary.json",
-        "blacklist": chat_whitelist_resource_path / "blacklist.json",
-        "custom": chat_whitelist_resource_path / "custom.json",
-        "custom_old": chat_whitelist_resource_path / "custom_old.json",
-        "random_prefixes": chat_whitelist_resource_path / "random_prefixes.json",
-        "random_suffixes": chat_whitelist_resource_path / "random_suffixes.json",
-        "trusted_usernames": chat_whitelist_resource_path / "trusted_usernames.json",
-        "usernames": chat_whitelist_resource_path / "usernames.json",
-    }
-    chat_whitelist_datasets: Dict[str, Set[str]] = {}
-
-    for dataset_type in chat_whitelist_dataset_paths:
-        dataset_path: Path = chat_whitelist_dataset_paths[dataset_type]
-        try:
-            with open(dataset_path, "r") as f:
-                data = json.load(f)
-                chat_whitelist_datasets[dataset_type] = set(data)
-        except Exception:
-            print(f"{dataset_path} malformed or missing")
-
-    # Assemble all json files in `whitelist_data` folder to a single word-dataset
-    _dataset_file_path = Path(chat_whitelist_resource_path, "whitelist_data")
-    chat_whitelist_datasets["whitelist_data"] = set()
-    for dataset_file in _dataset_file_path.glob("*.json"):
-        try:
-            with open(Path(_dataset_file_path, dataset_file), "r") as f:
-                data = json.load(f)
-                chat_whitelist_datasets["whitelist_data"].update(set(data))
-        except Exception:
-            print(f"{dataset_file} malformed or missing")
-
-    # TODO: Move chat_nicknames to whitelist
-    chat_nicknames = FileBasedDict(Path(chat_whitelist_resource_path, "nicknames.json"))
-
-    nicknames_whitelist = set(chat_nicknames.val.keys()).union(
-        set(chat_nicknames.val.values())
-    )  # If they have a nick, both their new and original names were approved. Add both to the whitelist.
-    chat_whitelist_datasets["nicknames"] = nicknames_whitelist
 
     # Character Select
     character_select_button_position = {"x": screen_res["center_x"], "y": 40}

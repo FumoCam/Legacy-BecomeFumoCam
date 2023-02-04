@@ -15,20 +15,11 @@ from twitchio import Chatter as TwitchChatter
 from twitchio import Message as TwitchMessage
 from twitchio.ext import commands, routines
 
-import chat_whitelist
 from chat_ocr import can_activate_ocr, do_chat_ocr
 from config import ActionQueueItem, Twitch
 from health import CFG, do_crash_check, get_hw_stats
 from hw_stats import hw_update_loop, ws_init
-from utilities import (
-    discord_log,
-    error_log,
-    log,
-    log_process,
-    notify_admin,
-    username_whitelist_request,
-    whitelist_request,
-)
+from utilities import discord_log, error_log, log, log_process, notify_admin
 
 
 class NameWhitelistRequest(Enum):
@@ -98,31 +89,6 @@ class TwitchBot(commands.Bot):
         with open(CFG.twitch_chatters_path, "w") as f:
             json.dump(list(CFG.twitch_chatters), f)
         return True
-
-    async def username_whitelist_requested(self, username):
-        username = username.lower()
-        min_to_req_whitelist = 2
-        if username in CFG.twitch_username_whitelist_requested:
-            return NameWhitelistRequest.WHITELIST_REQUEST_SENT
-        elif username not in CFG.twitch_username_whitelist_requested_pre:
-            # Only trigger a whitelist req if they send more than one message in a session
-            # (But say a whitelist req was made on the first message)
-            CFG.twitch_username_whitelist_requested_pre[username] = 1
-            return NameWhitelistRequest.NOT_ON_RECORD
-        elif (
-            CFG.twitch_username_whitelist_requested_pre[username] + 1
-            < min_to_req_whitelist
-        ):
-            # Havent reached the desired amount to send a whitelist req
-            # Currently this code is redundant until the number is raised
-            amount = CFG.twitch_username_whitelist_requested_pre[username] + 1
-            CFG.twitch_username_whitelist_requested_pre[username] = amount
-            return NameWhitelistRequest.NEEDS_MORE_MESSAGES
-
-        CFG.twitch_username_whitelist_requested.add(username)
-        with open(CFG.twitch_username_whitelist_requested_path, "w") as f:
-            json.dump(list(CFG.twitch_username_whitelist_requested), f)
-        return NameWhitelistRequest.READY_TO_REQUEST
 
     async def do_discord_log(self, message: TwitchMessage, is_chat=False):
         author = message.author.display_name
@@ -442,91 +408,9 @@ class TwitchBot(commands.Bot):
         )
         await CFG.add_action_queue(action)
 
-    async def old_m(self, ctx: commands.Context, msg: str) -> Optional[ActionQueueItem]:
-        """
-        Old messaging logic when using onboard censor. Retained for emergency usage on launch.
-        """
-
-        nickname = CFG.chat_nicknames.val.get(ctx.message.author.display_name)
-        # Chat with CamDev Tag
-        if ctx.message.author.display_name == getenv("TWITCH_CHAT_CHANNEL"):
-            action = ActionQueueItem(
-                "chat_with_name", {"name": "[CamDev]:", "msgs": [msg]}
-            )
-        # Non-trusted chat (whitelist only)
-        elif not chat_whitelist.user_is_trusted(CFG, ctx.message.author.display_name):
-            original_name = ctx.message.author.display_name
-            real_or_temp_name = nickname or original_name
-            if (
-                not chat_whitelist.username_in_whitelist(CFG, original_name)
-                and not nickname
-            ):
-                real_or_temp_name = chat_whitelist.get_random_name(CFG, original_name)
-                whitelist_requested_status = await self.username_whitelist_requested(
-                    original_name.lower()
-                )
-                if whitelist_requested_status == NameWhitelistRequest.NOT_ON_RECORD:
-                    await ctx.send(
-                        f"[Assigning random username '{real_or_temp_name}'. Your real username "
-                        f"'{original_name}' is pending approval.]"
-                    )
-                elif (
-                    whitelist_requested_status == NameWhitelistRequest.READY_TO_REQUEST
-                ):
-                    # Only send the request after a certain amount of messages, most users do not stick around
-                    username_whitelist_request(msg, original_name)
-
-            blacklisted_words = []
-            for word in msg.encode("ascii", "ignore").decode("ascii").split(" "):
-                if chat_whitelist.word_in_blacklist(CFG, word):
-                    blacklisted_words.append(word)
-
-            if blacklisted_words:
-                await ctx.send(
-                    "[You've attempted to send a message with blacklisted words ("
-                    f"{', '.join(blacklisted_words)}). The dev has been notified.]"
-                )
-                notify_admin(
-                    f"[BLACKLIST ALERT]\nUser: `{original_name}`\nMessage: {msg}\n"
-                    f"Blacklisted Words: `{', '.join(blacklisted_words)}`\n"
-                    f"<https://twitch.tv/popout/{getenv('TWITCH_CHAT_CHANNEL')}/viewercard/{original_name.lower()}>"
-                )
-                return None
-
-            censored_words, censored_message = chat_whitelist.get_censored_string(
-                CFG, msg
-            )
-
-            if censored_words:
-                await ctx.send(
-                    f"[Some words you used are not in the whitelist for new users and have been sent for "
-                    f"approval ({', '.join(censored_words)})]"
-                )
-
-            if censored_words:
-                whitelist_request(censored_words, msg, original_name)
-
-            action = ActionQueueItem(
-                "chat_with_name",
-                {
-                    "name": f"{real_or_temp_name}:",
-                    "msgs": [censored_message],
-                },
-            )
-
-        # Standard ("Trusted") chat
-        else:
-            action = ActionQueueItem(
-                "chat_with_name",
-                {
-                    "name": f"{nickname or ctx.message.author.display_name}:",
-                    "msgs": [msg],
-                },
-            )
-
-        return action
-
-    async def new_m(self, ctx: commands.Context, msg: str) -> Optional[ActionQueueItem]:
+    async def messsage_logic(
+        self, ctx: commands.Context, msg: str
+    ) -> Optional[ActionQueueItem]:
         """
         New message logic that uses Censor Service.
         """
@@ -598,7 +482,7 @@ class TwitchBot(commands.Bot):
                 return
         else:
             try:
-                potential_action = await self.new_m(ctx, msg)
+                potential_action = await self.messsage_logic(ctx, msg)
                 if potential_action is None:
                     return
                 action = potential_action  # HACK: MyPy can be weird
@@ -700,62 +584,6 @@ class TwitchBot(commands.Bot):
             CFG.crashed = False
         else:
             await ctx.send("[You do not have permission!]")
-
-    @commands.command()
-    async def whitelist(self, ctx: commands.Context):
-        if not await self.is_dev(ctx.author):
-            await ctx.send("[You do not have permission!]")
-            return
-
-        args = await self.get_args(ctx)
-        if not args:
-            await ctx.send("[Specify a word to whitelist!]")
-            return
-        before = len(CFG.chat_whitelist_datasets["custom"])
-
-        word_to_whitelist = args[0].lower()
-
-        CFG.chat_whitelist_datasets["custom"].add(word_to_whitelist)
-        with open(CFG.chat_whitelist_dataset_paths["custom"], "w") as f:
-            json.dump(sorted(CFG.chat_whitelist_datasets["custom"]), f, indent=2)
-
-        after = len(CFG.chat_whitelist_datasets["custom"])  # Sanity Check
-
-        await ctx.send(
-            f"[Added '{word_to_whitelist}' to whitelist! ({before}->{after})]"
-        )
-
-        return False
-
-    @commands.command()
-    async def userwhitelist(self, ctx: commands.Context):
-        if not await self.is_dev(ctx.author):
-            await ctx.send("[You do not have permission!]")
-            return
-
-        args = await self.get_args(ctx)
-        if not args:
-            await ctx.send("[Specify a username to whitelist!]")
-            return
-        before = len(CFG.chat_whitelist_datasets["usernames"])
-
-        word_to_whitelist = args[0].lower()
-
-        CFG.chat_whitelist_datasets["usernames"].add(word_to_whitelist)
-        with open(CFG.chat_whitelist_dataset_paths["usernames"], "w") as f:
-            json.dump(
-                sorted(CFG.chat_whitelist_datasets["usernames"]),
-                f,
-                indent=2,
-            )
-
-        after = len(CFG.chat_whitelist_datasets["usernames"])  # Sanity Check
-
-        await ctx.send(
-            f"[Added '{word_to_whitelist}' to username whitelist! ({before}->{after})]"
-        )
-
-        return False
 
     async def zoom_handler(self, zoom_key, ctx: commands.Context):
         zoom_amount: float = 15

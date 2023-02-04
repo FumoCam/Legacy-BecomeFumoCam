@@ -9,7 +9,6 @@ from requests import get
 
 from actions import mute_toggle, respawn_character
 from arduino_integration import ACFG, CFG
-from chat_whitelist import get_censored_string
 from health import (
     change_characters,
     check_character_menu,
@@ -275,17 +274,6 @@ def test_get_player_token():
             await async_sleep(wait_time)
 
         print(f'\n\n\n\n\nYOUR ID IS: "{total_diffs[0]}"')
-
-    asyncio.get_event_loop().run_until_complete(test())
-
-
-def test_censor():
-    async def test():
-        blacklisted_words, censored_string = get_censored_string(
-            CFG, "Somethingless", debug=True
-        )
-        print(f"Blacklisted words: [{','.join(blacklisted_words)}]")
-        print(f"Censored string: '{censored_string}'")
 
     asyncio.get_event_loop().run_until_complete(test())
 
