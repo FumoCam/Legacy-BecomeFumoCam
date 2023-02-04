@@ -3,9 +3,22 @@ output/
 resources/selenium/.browser_profile/
 resources/selenium/browser_cookies.json
 resources/selenium/*.exe
-resources/hud/fonts/
 resources/SoundVolumeView.cfg
 src/ai/
+
+# Other Resources (Private git repo)
+resources/OBS_Fumocam_Default.json
+resources/SoundVolumeView.exe
+resources/twitch_avatar_old.jpg
+resources/twitch_avatar.jpg
+resources/twitch_background_old.png
+resources/twitch_discord_banner.jpg
+resources/twitch_specs_banner.jpg
+resources/twitch_specs_details.txt
+resources/twitch_website_banner.jpg
+resources/hud/autoaimon.mp3
+resources/hud/fonts/*
+resources/soundtracks/
 
 # .idea folder
 .idea/
