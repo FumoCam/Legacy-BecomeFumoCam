@@ -31,7 +31,10 @@ A semi-technical "intro" exists, but there has been too many drastic additions a
 2. You will see some OCR functions referring to an "`ai`" module.
    - This is a private, unshared repository located at [Legacy-BecomeFumoCam-AI](https://github.com/FumoCam/Legacy-BecomeFumoCam-AI).
    - This will not be shared. The code that utilizes it is stubabble, so write your own replacement or comment it out.
-3. A setup guide can be found in [INSTRUCTIONS.md](INSTRUCTIONS.md)
+3. You will see a reference to "Censor Service" in message functions. You must install and configure:
+   - [Whitelist-Censor-Client](https://github.com/FumoCam/Whitelist-Censor-Client), on the same machine
+   - [Whitelist-Censor-Server](https://github.com/FumoCam/Whitelist-Censor-Server), ideally on a remote server
+4. A setup guide can be found in [INSTRUCTIONS.md](INSTRUCTIONS.md)
    - Its a very verbose guide, and is only updated on system wipes.
    - It may not be easy to follow or be up to date.
 
