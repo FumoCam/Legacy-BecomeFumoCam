@@ -14,3 +14,6 @@ src/.env
 
 # mypy
 .mypy_cache/
+
+# pyenv
+.python-version

@@ -17,8 +17,8 @@ from twitchio.ext import commands, routines
 
 from chat_ocr import can_activate_ocr, do_chat_ocr
 from config import ActionQueueItem, Twitch
-from health import CFG, do_crash_check, get_hw_stats
-from hw_stats import hw_update_loop, ws_init
+from health import CFG, do_crash_check
+from hud import hud_ws_init
 from utilities import discord_log, error_log, log, log_process, notify_admin
 
 
@@ -38,7 +38,7 @@ class TwitchBot(commands.Bot):
         print(f'[Twitch] Logged in as "{self.nick}"')
         await CFG.async_main()
         await self.run_subroutines()
-        await asyncio.gather(ws_init(), hw_update_loop())
+        await asyncio.gather(hud_ws_init())
 
     async def event_message(self, message: TwitchMessage):
         if message.echo:
@@ -649,11 +649,6 @@ async def routine_check_better_server():
         await CFG.add_action_queue(ActionQueueItem("check_for_better_server"))
     except Exception:
         error_log(traceback.format_exc())
-
-
-@routines.routine(seconds=1)
-async def routine_hw_stats():
-    await get_hw_stats()
 
 
 @routines.routine(seconds=1, wait_first=True)

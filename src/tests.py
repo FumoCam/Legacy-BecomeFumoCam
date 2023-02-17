@@ -19,7 +19,6 @@ from health import (
     force_respawn_character,
     get_best_server,
     get_current_server_id,
-    get_hw_stats,
     join_target_server,
     ocr_for_settings,
     toggle_collisions,
@@ -354,13 +353,6 @@ def test_move_mouse():
 
         # Comedy spawn calibration
         # ACFG.precision_look("right", 469, raw=True)
-
-    asyncio.get_event_loop().run_until_complete(do_test())
-
-
-def test_hw_stat():
-    async def do_test():
-        await get_hw_stats()
 
     asyncio.get_event_loop().run_until_complete(do_test())
 
