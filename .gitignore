@@ -3,8 +3,12 @@ output/
 resources/selenium/.browser_profile/
 resources/selenium/browser_cookies.json
 resources/selenium/*.exe
-resources/private/*
+
+# Related repos
+resources/private
 src/ai/
+censor/
+hud/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

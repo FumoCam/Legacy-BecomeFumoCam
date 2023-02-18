@@ -4,7 +4,7 @@ import sqlite3
 from math import floor
 from pathlib import Path
 from time import time
-from typing import Dict, List, Set
+from typing import Dict, List
 
 from dotenv import dotenv_values, load_dotenv
 from mss import mss
@@ -88,6 +88,7 @@ class MainBotConfig:
     # ===END STATE-LIKE VARIABLES===#
 
     resources_path = Path.cwd().parent / "resources"
+    private_resources_path = resources_path / "private"
     output_path = Path.cwd().parent / "output"
     screen_res = (
         {  # TODO: Don't use globals, make class-based # 2022-08-19: What did this mean?
@@ -274,38 +275,12 @@ class MainBotConfig:
 
     taunt_button_position = (0.73, 0.89)
 
-    twitch_user_blacklist_path = OBS.output_folder / "twitch_blacklist.json"
-    twitch_user_blacklist = (
-        []
-    )  # Users who have not been banned, but are unable to use the bot
-    try:
-        with open(str(twitch_user_blacklist_path), "r") as f:
-            twitch_user_blacklist = json.load(f)
-    except Exception:
-        print(f"{twitch_user_blacklist_path} malformed or missing")
-
     twitch_chatters = set()
     twitch_chatters_path = OBS.output_folder / "twitch_chatters.json"
     try:
         with open(twitch_chatters_path, "r") as f:
             twitch_chatters_list = json.load(f)
             twitch_chatters = set(twitch_chatters_list)
-    except Exception:
-        print(f"{twitch_chatters_path} malformed or missing")
-
-    # Many will send one message and leave, require 2 msgs in a session for whitelist
-    twitch_username_whitelist_requested_pre: Dict[str, int] = {}
-
-    twitch_username_whitelist_requested: Set[str] = set()
-    twitch_username_whitelist_requested_path = (
-        OBS.output_folder / "twitch_username_whitelist_requested.json"
-    )
-    try:
-        with open(twitch_username_whitelist_requested_path, "r") as f:
-            twitch_username_whitelist_requested_list = json.load(f)
-            twitch_username_whitelist_requested = set(
-                twitch_username_whitelist_requested_list
-            )
     except Exception:
         print(f"{twitch_chatters_path} malformed or missing")
 

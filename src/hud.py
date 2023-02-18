@@ -1,6 +1,9 @@
 import asyncio
+from traceback import format_exc
 
 import websockets
+
+from utilities import error_log
 
 
 class HUDManager:
@@ -26,8 +29,12 @@ hud_manager = HUDManager()
 
 
 async def hud_ws_init():
-    async with websockets.serve(hud_manager.ws_handler, "127.0.0.1", 8080):
-        await asyncio.Future()  # run forever
+    while True:
+        try:
+            async with websockets.serve(hud_manager.ws_handler, "127.0.0.1", 8080):
+                await asyncio.Future()  # run forever
+        except Exception:
+            error_log(format_exc())
 
 
 async def ws_main():

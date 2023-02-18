@@ -25,8 +25,8 @@ A semi-technical "intro" exists, but there has been too many drastic additions a
 # Installation
 
 1. You will see README.md files in some of the resource folders with "Items not in version control".
-   - You can find these in the private [Legacy-BecomeFumoCam-Other-Resources](https://github.com/FumoCam/Legacy-BecomeFumoCam-Other-Resources) repository.
-   - If you do not have access, you can request it from me.
+   - You can find these in the private [Legacy-BecomeFumoCam-PrivateResources](https://github.com/FumoCam/Legacy-BecomeFumoCam-PrivateResources) repository.
+   - If you do not have access, you can raise an issue to request it from me.
    - Alternatively, you can supply your own versions of the missing files, there is nothing remarkably unique.
 2. You will see some OCR functions referring to an "`ai`" module.
    - This is a private, unshared repository located at [Legacy-BecomeFumoCam-AI](https://github.com/FumoCam/Legacy-BecomeFumoCam-AI).

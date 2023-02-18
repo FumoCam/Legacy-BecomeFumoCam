@@ -1,18 +1,25 @@
 @echo off
-cd "%PROGRAMFILES%"\obs-studio\bin\64bit\
+set OBS_DIR="%PROGRAMFILES%"\obs-studio\bin\64bit\
+set BECOMEFUMOCAM_DIR=%USERPROFILE%\Desktop\BecomeFumoCam
+
+:: Start OBS
+cd %OBS_DIR%
 start obs64.exe --disable-updater --startstreaming
-cd %USERPROFILE%\Desktop\CensorClient
+:: Start CensorClient
+echo [System Reboot Detected]> %BECOMEFUMOCAM_DIR%\output\main_process.txt
+echo Please wait. Initializing core systems. (0/3)> %BECOMEFUMOCAM_DIR%\\output\main_status.txt
+cd %BECOMEFUMOCAM_DIR%\censor\
 start poetry run python main.py
-echo [System Reboot Detected]> %USERPROFILE%\Desktop\FumoCam\output\main_process.txt
-echo Please wait. Initializing core systems. (0/3)> %USERPROFILE%\Desktop\FumoCam\output\main_status.txt
 TIMEOUT /T 5
-cd %USERPROFILE%\Desktop\FumoCam\src\
-echo [System Reboot Detected]> %USERPROFILE%\Desktop\FumoCam\output\main_process.txt
-echo Please wait. Initializing core systems. (1/3)> %USERPROFILE%\Desktop\FumoCam\output\main_status.txt
-TIMEOUT /T 15
+:: Initialize serial connection
+echo [System Reboot Detected]> %BECOMEFUMOCAM_DIR%\output\main_process.txt
+echo Please wait. Initializing core systems. (1/3)> %BECOMEFUMOCAM_DIR%\\output\main_status.txt
+cd %BECOMEFUMOCAM_DIR%\src\
 start /wait poetry run python initialize_serial.py
-echo [System Reboot Detected]> %USERPROFILE%\Desktop\FumoCam\output\main_process.txt
-echo Please wait. Initializing core systems. (2/3)> %USERPROFILE%\Desktop\FumoCam\output\main_status.txt
+TIMEOUT /T 15
+:: Start main program
+echo [System Reboot Detected]> %BECOMEFUMOCAM_DIR%\output\main_process.txt
+echo Please wait. Initializing core systems. (2/3)> %BECOMEFUMOCAM_DIR%\\output\main_status.txt
 TIMEOUT /T 10
 start poetry run python main.py
 

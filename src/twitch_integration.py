@@ -32,13 +32,15 @@ class NameWhitelistRequest(Enum):
 class TwitchBot(commands.Bot):
     def __init__(self, token: str, channel_name: str):
         self.aiohttp_client_session = aiohttp.ClientSession()
+        self.hud_ws_server_task = None
         super().__init__(token=token, prefix="!", initial_channels=[channel_name])
 
     async def event_ready(self):
         print(f'[Twitch] Logged in as "{self.nick}"')
         await CFG.async_main()
         await self.run_subroutines()
-        await asyncio.gather(hud_ws_init())
+        # TODO: Looks like we do nothing with this if not HWMon. Implement ping cmd at least?
+        self.hud_ws_server_task = asyncio.create_task(hud_ws_init())
 
     async def event_message(self, message: TwitchMessage):
         if message.echo:

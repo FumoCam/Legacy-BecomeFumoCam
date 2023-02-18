@@ -73,7 +73,7 @@ async def mute_toggle(set_mute: Union[bool, None] = None):
     desired_volume = 0 if desired_mute_state else 100
     log_msg = "Muting" if desired_mute_state else "Un-muting"
     log(log_msg)
-    sc_exe_path = str(CFG.resources_path / CFG.sound_control_executable_name)
+    sc_exe_path = str(CFG.private_resources_path / CFG.sound_control_executable_name)
     os.system(  # nosec
         f'{sc_exe_path} /SetVolume "{CFG.game_executable_name}" {desired_volume}'
     )
@@ -87,7 +87,7 @@ async def mute_toggle(set_mute: Union[bool, None] = None):
             OBS.output_folder / OBS.muted_icon_name,
         )
         vlc_exe_path = str(CFG.vlc_path / CFG.vlc_executable_name)
-        music_folder = str(CFG.resources_path / "soundtracks" / "overworld")
+        music_folder = str(CFG.private_resources_path / "soundtracks" / "overworld")
         Popen(
             f'"{vlc_exe_path}" --playlist-autostart --loop --playlist-tree {music_folder}'
         )
