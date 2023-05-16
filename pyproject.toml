@@ -5,9 +5,9 @@ description = ""
 authors = [""]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 python-dotenv = "^0.20.0" # Allow reading .env file
-twitchio = "^2.4.0" # Twitch communication wrapper
+twitchio = "^2.6.0" # Twitch communication wrapper
 requests = "^2.28.1" # Game API queries
 selenium = "^4.4.3" # Game launcher
 psutil = "^5.9.1" # TODO: Remove, ONLY uses process_iter for `is_process_running`
