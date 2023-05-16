@@ -154,6 +154,24 @@ async def check_active(
     force_fullscreen: bool = True,
 ) -> bool:
     print(f"[check_active] {title} | {title_ending}")
+    windows = {window.title: window for window in getAllWindows()}
+    if "Error" in windows:
+        windows["Error"].close()
+        print("[check_active] SensApi.dll or other error detected. Closing.")
+        return False
+    if "Microsoft .NET Framework" in windows:
+        try:
+            windows["Microsoft .NET Framework"].close()
+        except Exception:
+            notify_admin("NET Framework Error, failed to resolve")
+            from os import system
+
+            system("shutdown /f /r /t 30")  # nosec
+            exit()
+        print("[check_active] LibreHardwareMonitor or other error detected. Closing.")
+
+        return False
+
     active_window = getActiveWindow()
     if active_window is not None:
         title_active = title_ending is None and active_window.title == title

@@ -146,6 +146,9 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
             ACFG.resetMouse()
             log_process("")
             log("")
+        elif action.name == "handle_failed_to_join":
+            await handle_join_new_server(crash=True)
+            remove_duplicates = False
         elif action.name == "handle_crash":
             await handle_join_new_server(crash=True)
             remove_duplicates = True
