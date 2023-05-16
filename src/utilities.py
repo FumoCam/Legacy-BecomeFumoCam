@@ -13,7 +13,7 @@ from mss.screenshot import ScreenShot
 from psutil import process_iter
 from pydirectinput import press as press_key
 from pygetwindow import getActiveWindow, getAllWindows
-from requests import post
+from requests import Timeout, post
 from requests.exceptions import HTTPError
 
 from config import CFG, OBS
@@ -248,10 +248,10 @@ def notify_admin(message: str) -> bool:
             f"<https://twitch.tv/{os.getenv('TWITCH_CHAT_CHANNEL')}>"
         ),
     }
-    result = post(webhook_url, json=webhook_data)
+    result = post(webhook_url, json=webhook_data, timeout=10)
     try:
         result.raise_for_status()
-    except HTTPError as err:
+    except (HTTPError, Timeout) as err:
         print(err)
     else:
         print(f"[Dev Notified] {message}")
@@ -264,10 +264,11 @@ def notify_admin(message: str) -> bool:
             post(
                 webhook_url,
                 files={f"_{filename}": (filename, screenshot_binary)},
+                timeout=10,
             )
             try:
                 result.raise_for_status()
-            except HTTPError as error:
+            except (HTTPError, Timeout) as error:
                 print(error)
             else:
                 print(f"[Logged Screenshot] {message}")
@@ -351,10 +352,10 @@ async def discord_log(
         if webhook_url is None:
             continue
 
-        result = post(webhook_url, json=webhook_data)
+        result = post(webhook_url, json=webhook_data, timeout=10)
         try:
             result.raise_for_status()
-        except HTTPError as err:
+        except (HTTPError, Timeout) as err:
             print(err)
             success = False
         else:
@@ -371,10 +372,11 @@ async def discord_log(
                             screenshot_binary,
                         )
                     },
+                    timeout=10,
                 )
                 try:
                     result.raise_for_status()
-                except HTTPError as error:
+                except (HTTPError, Timeout) as error:
                     print(error)
                     success = False
                 else:

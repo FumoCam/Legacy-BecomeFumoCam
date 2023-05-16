@@ -10,7 +10,7 @@ from typing import Optional, Union
 
 import aiohttp
 from requests import get, post
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, Timeout
 from twitchio import Chatter as TwitchChatter
 from twitchio import Message as TwitchMessage
 from twitchio.ext import commands, routines
@@ -769,10 +769,10 @@ async def routine_monitor_game_updates():
 
     webhook_url = getenv("DISCORD_WEBHOOK_UPDATES_CHANNEL")
     webhook_data = {"content": f"**__Update detected__**\n{last_update}"}
-    result = post(webhook_url, json=webhook_data)
+    result = post(webhook_url, json=webhook_data, timeout=10)
     try:
         result.raise_for_status()
-    except HTTPError as err:
+    except (HTTPError, Timeout) as err:
         print(err)
     else:
         print("[Update notification sent]")
