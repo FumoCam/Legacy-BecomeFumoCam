@@ -10,6 +10,9 @@ src/ai/
 censor/
 hud/
 
+# Local OSS audit
+requirements-dev.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
