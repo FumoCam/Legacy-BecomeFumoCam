@@ -9,6 +9,7 @@ import numpy as np
 import pytesseract
 from requests import get
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 
 from actions import respawn_character, send_chat
 from commands import ACFG, CFG
@@ -244,11 +245,11 @@ async def open_roblox_with_selenium_browser(js_code: str) -> bool:
         log("")
         return False
 
+    service = Service(executable_path=CFG.browser_driver_path)
     options = webdriver.ChromeOptions()
     options.add_argument(f"--user-data-dir={CFG.browser_profile_path}")
-    driver = webdriver.Chrome(
-        options=options, executable_path=str(CFG.browser_driver_path)
-    )
+    driver = webdriver.Chrome(service=service, options=options)  # type: ignore[call-arg]
+
     driver.get(CFG.game_instances_url)
 
     for cookie in cookies:

@@ -150,15 +150,20 @@ def test_join_target_server():
 def test_get_cookies_for_browser():
     import json
 
-    from selenium import webdriver
-
     print(
         "Login to your account in the brower that opens, come back to this screen, and press enter."
     )
     print("Press enter to start")
     input()
 
-    driver = webdriver.Chrome(CFG.browser_driver_path)
+    from selenium import webdriver
+    from selenium.webdriver.chrome.service import Service
+
+    service = Service(executable_path=CFG.browser_driver_path)
+    options = webdriver.ChromeOptions()
+    driver = webdriver.Chrome(service=service, options=options)
+
+    # driver = webdriver.Chrome(str(CFG.browser_driver_path))
     driver.get("https://www.roblox.com/games/6238705697/Become-Fumo")
 
     input("\n\n\nPress Enter to save cookies\n\n\n\n")
@@ -381,7 +386,7 @@ def test_bare_roblox_api():
 if __name__ == "__main__":
     pyautogui.FAILSAFE = False
     # If account banned
-    # test_get_cookies_for_browser()
+    test_get_cookies_for_browser()
     # test_character_select_full()
     # test_toggle_collisions()
     # test_check_for_better_server()
@@ -406,7 +411,7 @@ if __name__ == "__main__":
     # test_character_select()
     # test_character_select_full()
     # test_check_for_better_server()
-    test_bare_roblox_api()
+    # test_bare_roblox_api()
     # test_character_select_full(click_mouse=True)
     # test_force_respawn()
     # test_toggle_collisions()
