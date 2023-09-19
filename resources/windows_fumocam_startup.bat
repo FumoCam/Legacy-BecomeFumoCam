@@ -2,6 +2,7 @@
 set OBS_DIR="%PROGRAMFILES%"\obs-studio\bin\64bit\
 set BECOMEFUMOCAM_DIR=%USERPROFILE%\Desktop\BecomeFumoCam
 
+TIMEOUT /T 5
 :: Start OBS
 cd %OBS_DIR%
 start obs64.exe --disable-updater --startstreaming
