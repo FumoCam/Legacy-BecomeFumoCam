@@ -2,26 +2,26 @@
 name = "fumocam"
 version = "0.1.0"
 description = ""
-authors = [""]
+authors = []
 
 [tool.poetry.dependencies]
 python = "^3.11"
 python-dotenv = "^0.20.0" # Allow reading .env file
-twitchio = "^2.6.0" # Twitch communication wrapper
-requests = "^2.31.0" # Game API queries
-selenium = "^4.10.0" # Game launcher
-psutil = "^5.9.1" # TODO: Remove, ONLY uses process_iter for `is_process_running`
-pyserial = "^3.5" # Hardware-Driven Input Emulation (Arduino)
-PyAutoGUI = "^0.9.53" # TODO: Remove, ONLY uses get_mouse_position and get_monitor_size
-PyDirectInput = "^1.0.4" # Software-Driven Input Emulation
-PyGetWindow = "^0.0.9" # TODO: ONLY for check_active and get_open_windows, potentially replaceable with win32 api, see sbfcam
-mss = "^6.1.0" # Take inexpensive screenshots
-opencv-python = "^4.6.0" # Computervision
-pytesseract = "^0.3.10" # OCR
-Levenshtein = "^0.20.2" # Used for fuzzy-matching text (specifically, in OCR)
-websockets = "^10.3" # HUD
-aiohttp = ">=3.8.5" # CVE Fix
-pillow = ">=9.3.0" # CVE Fix
+twitchio = "^2.6.0"       # Twitch communication wrapper
+requests = "^2.31.0"      # Game API queries
+selenium = "^4.10.0"      # Game launcher
+psutil = "^5.9.1"         # TODO: Remove, ONLY uses process_iter for `is_process_running`
+pyserial = "^3.5"         # Hardware-Driven Input Emulation (Arduino)
+PyAutoGUI = "^0.9.53"     # TODO: Remove, ONLY uses get_mouse_position and get_monitor_size
+PyDirectInput = "^1.0.4"  # Software-Driven Input Emulation
+PyGetWindow = "^0.0.9"    # TODO: ONLY for check_active and get_open_windows, potentially replaceable with win32 api, see sbfcam
+mss = "^6.1.0"            # Take inexpensive screenshots
+opencv-python = "^4.6.0"  # Computervision
+pytesseract = "^0.3.10"   # OCR
+Levenshtein = "^0.20.2"   # Used for fuzzy-matching text (specifically, in OCR)
+websockets = "^10.3"      # HUD
+aiohttp = ">=3.8.5"       # CVE Fix
+pillow = ">=9.3.0"        # CVE Fix
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"
@@ -40,7 +40,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.isort]
 profile = "black"
-known_first_party="ai.chat_logic"
+known_first_party = "ai.chat_logic"
 
 [tool.mypy]
 ignore_missing_imports = true
