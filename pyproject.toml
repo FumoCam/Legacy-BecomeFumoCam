@@ -20,9 +20,11 @@ opencv-python = "^4.6.0"  # Computervision
 pytesseract = "^0.3.10"   # OCR
 Levenshtein = "^0.20.2"   # Used for fuzzy-matching text (specifically, in OCR)
 websockets = "^10.3"      # HUD
-aiohttp = ">=3.8.5"       # CVE Fix
-pillow = ">=9.3.0"        # CVE Fix
-certifi = ">=2023.7.22"   # CVE Fix (CVE-2023-37920)
+# CVE Hardcoded Fixes
+aiohttp = ">=3.8.5"     # CVE Fix
+pillow = ">=9.3.0"      # CVE Fix
+certifi = ">=2023.7.22" # CVE Fix (CVE-2023-37920)
+gitpython = ">=3.1.35"  # CVE Fix (CVE-2023-41040)
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"
