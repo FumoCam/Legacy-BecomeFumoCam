@@ -22,6 +22,7 @@ Levenshtein = "^0.20.2"   # Used for fuzzy-matching text (specifically, in OCR)
 websockets = "^10.3"      # HUD
 aiohttp = ">=3.8.5"       # CVE Fix
 pillow = ">=9.3.0"        # CVE Fix
+certifi = ">=2023.7.22"   # CVE Fix (CVE-2023-37920)
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"
