@@ -289,38 +289,38 @@ def test_window_area():
         await check_active(force_fullscreen=False)
         sleep(1)
 
-        monitor = CFG.screen_res["mss_monitor"].copy()
+        monitor = SCREEN_RES["mss_monitor"].copy()
 
         # SETTINGS
-        # horizontal_offset = int(0.13 * CFG.screen_res["width"])
+        # horizontal_offset = int(0.13 * SCREEN_RES["width"])
         # monitor["left"] += horizontal_offset
         # monitor["width"] -= horizontal_offset * 2
-        # vertical_offset = int(0.15 * CFG.screen_res["height"])
+        # vertical_offset = int(0.15 * SCREEN_RES["height"])
         # monitor["top"] += vertical_offset
         # monitor["height"] -= vertical_offset * 2
 
         # CHARACTER SELECT
-        # horizontal_offset = int(0.33 * CFG.screen_res["width"])
+        # horizontal_offset = int(0.33 * SCREEN_RES["width"])
         # monitor["left"] += horizontal_offset
         # monitor["width"] -= horizontal_offset * 2
-        # top_offset = int(0.31 * CFG.screen_res["height"])
+        # top_offset = int(0.31 * SCREEN_RES["height"])
         # monitor["top"] += top_offset
-        # bottom_offset = int(0.14 * CFG.screen_res["height"])
+        # bottom_offset = int(0.14 * SCREEN_RES["height"])
         # monitor["height"] -= top_offset + bottom_offset
 
         # BACKPACK
-        # horizontal_offset = int(0.14 * CFG.screen_res["width"])
+        # horizontal_offset = int(0.14 * SCREEN_RES["width"])
         # monitor["left"] += horizontal_offset
         # monitor["width"] -= horizontal_offset * 2
-        # vertical_offset = int(0.137 * CFG.screen_res["height"])
+        # vertical_offset = int(0.137 * SCREEN_RES["height"])
         # monitor["top"] += vertical_offset
         # monitor["height"] -= vertical_offset * 2
 
         # CHARACTER SELECT WHITESPACE
-        horizontal_offset = int(CFG.screen_res["center_x"]) - 5
+        horizontal_offset = int(SCREEN_RES["center_x"]) - 5
         monitor["left"] += horizontal_offset
         monitor["width"] -= horizontal_offset * 2
-        vertical_offset = int(0.045 * CFG.screen_res["height"])
+        vertical_offset = int(0.045 * SCREEN_RES["height"])
         monitor["top"] += vertical_offset
         monitor["height"] = vertical_offset + 2
 
@@ -401,7 +401,7 @@ def test_nav():
         # ACFG.leap(forward_time=0.2, jump_time=0.1, direction_key="s", jump_delay=0.05)
 
         # ACFG.space_and_left_click()
-        
+
         # ACFG.move("s", 0.3, raw=True)
         # ACFG.zoom("i", 50)
         # sleep(0.5)
