@@ -9,6 +9,7 @@ from requests import get
 
 from actions import mute_toggle, respawn_character
 from arduino_integration import ACFG, CFG
+from config import SCREEN_RES
 from health import (
     change_characters,
     check_character_menu,
@@ -23,6 +24,7 @@ from health import (
     ocr_for_settings,
     toggle_collisions,
 )
+import navpoints
 from twitch_integration import twitch_main
 from utilities import check_active, kill_process, take_screenshot_binary_blocking
 
@@ -383,10 +385,30 @@ def test_bare_roblox_api():
         print(response.text())
 
 
+def test_nav():
+    async def do_test():
+        await check_active()
+        await async_sleep(1)
+
+        # Calibration
+        # navpoints.treehouse_spawn_calibration()
+        # navpoints.comedy_spawn_calibration()
+        # navpoints.main_spawn_calibration()
+
+        # Nav
+        # navpoints.main_to_comedy_machine()
+        # navpoints.comedy_spawn_to_rocket()
+
+        ACFG.space_and_left_click()
+
+    asyncio.get_event_loop().run_until_complete(do_test())
+
+
 if __name__ == "__main__":
     pyautogui.FAILSAFE = False
     # If account banned
-    test_get_cookies_for_browser()
+    # test_get_cookies_for_browser()
+    test_nav()
     # test_character_select_full()
     # test_toggle_collisions()
     # test_check_for_better_server()

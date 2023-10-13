@@ -5,6 +5,7 @@ from traceback import format_exc
 import pyautogui
 
 from actions import (
+    chat_jump_and_click,
     chat_mouse_click,
     do_advert,
     do_anti_afk,
@@ -193,6 +194,10 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
             log_process("")
         elif action.name == "mouse_click":
             await chat_mouse_click()
+            log_process("")
+            log("")
+        elif action.name == "jump_and_click":
+            await chat_jump_and_click()
             log_process("")
             log("")
         elif action.name == "mouse_hide":

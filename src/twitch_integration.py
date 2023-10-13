@@ -625,6 +625,14 @@ class TwitchBot(commands.Bot):
         action = ActionQueueItem("autonav", {"location": "fixbright"})
         await CFG.add_action_queue(action)
 
+    @commands.command()
+    async def rjump(self, ctx: commands.Context):
+        await CFG.add_action_queue(ActionQueueItem("jump_and_click"))
+
+    @commands.command()
+    async def rocketjump(self, ctx: commands.Context):
+        await CFG.add_action_queue(ActionQueueItem("jump_and_click"))
+
 
 @routines.routine(minutes=10, wait_first=True)
 async def routine_anti_afk():

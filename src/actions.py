@@ -209,3 +209,15 @@ async def chat_mouse_click():
         await move_mouse_chat_cmd(mouse_x, mouse_y)
         sleep(2)
     ACFG.left_click()
+
+
+async def chat_jump_and_click():
+    log_process("Jumping and Left Clicking")
+    mouse_x, mouse_y = get_mouse_position()[0], get_mouse_position()[1]
+    print("Got mouse position")
+    had_to_move, area, _, __ = await test_chat_mouse_pos(mouse_x, mouse_y)
+    if had_to_move:
+        log(f"Mouse is in unsafe spot (near {area}), relocating...")
+        await move_mouse_chat_cmd(mouse_x, mouse_y)
+        sleep(2)
+    ACFG.space_and_left_click()

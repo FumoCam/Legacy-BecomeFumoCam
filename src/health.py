@@ -16,12 +16,16 @@ from commands import ACFG, CFG
 from config import OBS, ZOOM_FIRST_PERSON, ActionQueueItem
 from navpoints import (  # TODO: Make this better/scalable
     comedy_spawn_calibration,
+    comedy_spawn_to_comedy_machine,
+    comedy_spawn_to_rocket,
     main_spawn_calibration,
     main_to_beach,
     main_to_classic,
     main_to_classic_fix_bright,
+    main_to_comedy_machine,
     main_to_miko,
     main_to_ratcade,
+    main_to_rocket,
     main_to_shrimp_tree,
     main_to_train,
     main_to_treehouse_bench,
@@ -674,7 +678,8 @@ async def auto_nav(
 
     # Get ready to navigate from any spawn
     if spawn == "comedy_machine":
-        comedy_spawn_calibration()
+        if location not in {"comedy", "rocket"}:
+            comedy_spawn_calibration()
     elif spawn == "tree_house":
         if location == "treehouse":
             treehouse_bench_calibration()
@@ -702,6 +707,16 @@ async def auto_nav(
         main_to_beach()
     elif location == "miko":
         main_to_miko()
+    elif location == "comedy":
+        if spawn == "comedy_machine":
+            comedy_spawn_to_comedy_machine()
+        else:
+            main_to_comedy_machine()
+    elif location == "rocket":
+        if spawn == "comedy_machine":
+            comedy_spawn_to_rocket()
+        else:
+            main_to_rocket()
 
     log("Zooming in to normal scale")
     default_zoom_in_amount = CFG.zoom_max - CFG.zoom_default

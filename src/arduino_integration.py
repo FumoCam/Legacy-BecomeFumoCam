@@ -103,6 +103,16 @@ class ArduinoConfig:
         payload = {"type": "leftClick"}
         self.arduino_interface(payload, 2)  # Arbitrary max time for safety
 
+    def space_and_left_click(self, click_delay=0, keyup_delay=0.2):
+        self.mouse_alt_tab()
+        pydirectinput.keyDown("space")
+        if click_delay != 0:
+            sleep(keyup_delay)
+        pydirectinput.click()
+        if keyup_delay != 0:
+            sleep(keyup_delay)
+        pydirectinput.keyUp("space")
+
     def mouse_alt_tab(self):
         pydirectinput.move(1, 1)
         pydirectinput.move(-2, -2)

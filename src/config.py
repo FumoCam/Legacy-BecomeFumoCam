@@ -35,11 +35,21 @@ class Twitch:
     admins = ["becomefumocam", "becomefumocam2", os.getenv("TWITCH_OWNER_USERNAME")]
 
 
-class OBS:
-    output_folder = Path.cwd().parent / "output"
-    event_time = "2021-06-09 12:05:00AM"
-    event_end_time = "2021-05-03 10:23:18PM"
-    muted_icon_name = "muted_icon.png"
+class OBSClass:
+    def __init__(self):
+        self.output_folder = Path.cwd().parent / "output"
+        if not self.output_folder.exists():
+            try:
+                self.output_folder.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                print(f"Error creating directory {self.output_folder}: {e}")
+
+        self.event_time = "2021-06-09 12:05:00AM"
+        self.event_end_time = "2021-05-03 10:23:18PM"
+        self.muted_icon_name = "muted_icon.png"
+
+
+OBS = OBSClass()
 
 
 class ActionQueueItem:
@@ -59,6 +69,31 @@ class BlockedMouseRegion:
 
 # TODO: Make constants nicer
 ZOOM_FIRST_PERSON = 140
+SIT_BUTTON_POSITION = (0.79, 0.89)
+SCREEN_RES = (
+    {  # TODO: Don't use globals, make class-based # 2022-08-19: What did this mean?
+        "width": get_monitor_size()[0],
+        "height": get_monitor_size()[1],
+        "x_multi": get_monitor_size()[0] / 2560,
+        "y_multi": get_monitor_size()[1] / 1440,
+        "center_x_float": get_monitor_size()[0] / 2,
+        "center_y_float": get_monitor_size()[1] / 2,
+        "center_x": int(get_monitor_size()[0] / 2),
+        "center_y": int(get_monitor_size()[1] / 2),
+        "mss_monitor": mss().monitors[-1],
+    }
+)
+BACKPACK_BUTTON_POSITION = (0.87, 0.89)
+BACKPACK_ITEM_POSITIONS = {
+    1: {"x": 0.26, "y": 0.35},
+    2: {"x": 0.41, "y": 0.35},
+    3: {"x": 0.56, "y": 0.35},
+    4: {"x": 0.71, "y": 0.35},
+    5: {"x": 0.26, "y": 0.6},
+    6: {"x": 0.41, "y": 0.6},
+    7: {"x": 0.56, "y": 0.6},
+    8: {"x": 0.71, "y": 0.6},
+}
 
 
 class MainBotConfig:
@@ -90,19 +125,7 @@ class MainBotConfig:
     resources_path = Path.cwd().parent / "resources"
     private_resources_path = resources_path / "private"
     output_path = Path.cwd().parent / "output"
-    screen_res = (
-        {  # TODO: Don't use globals, make class-based # 2022-08-19: What did this mean?
-            "width": get_monitor_size()[0],
-            "height": get_monitor_size()[1],
-            "x_multi": get_monitor_size()[0] / 2560,
-            "y_multi": get_monitor_size()[1] / 1440,
-            "center_x_float": get_monitor_size()[0] / 2,
-            "center_y_float": get_monitor_size()[1] / 2,
-            "center_x": int(get_monitor_size()[0] / 2),
-            "center_y": int(get_monitor_size()[1] / 2),
-            "mss_monitor": mss().monitors[-1],
-        }
-    )
+    screen_res = SCREEN_RES
 
     advertisement = [
         "You can control this bot live!",
@@ -117,17 +140,8 @@ class MainBotConfig:
             "Go to its Roblox profile and click the purple Twitch icon!",
         ]
 
-    backpack_button_position = (0.87, 0.89)
-    backpack_item_positions = {
-        1: {"x": 0.26, "y": 0.35},
-        2: {"x": 0.41, "y": 0.35},
-        3: {"x": 0.56, "y": 0.35},
-        4: {"x": 0.71, "y": 0.35},
-        5: {"x": 0.26, "y": 0.6},
-        6: {"x": 0.41, "y": 0.6},
-        7: {"x": 0.56, "y": 0.6},
-        8: {"x": 0.71, "y": 0.6},
-    }
+    backpack_button_position = BACKPACK_BUTTON_POSITION
+    backpack_item_positions = BACKPACK_ITEM_POSITIONS
     selenium_path = resources_path / "selenium"
     selenium_path.mkdir(parents=True, exist_ok=True)
     browser_profile_path = selenium_path / ".browser_profile"
@@ -141,6 +155,7 @@ class MainBotConfig:
     chat_bracket_like_chars = ["|", "!", "l", "I"]
     chat_bracket_like_chars_left = chat_bracket_like_chars + ["[", "{", "("]
     chat_bracket_like_chars_right = chat_bracket_like_chars + ["]", "}", ")"]
+
     chat_db = sqlite3.connect(OBS.output_folder / "chat_messages.sqlite")
     chat_db_cursor = chat_db.cursor()
     chat_db_tables = [
@@ -239,6 +254,8 @@ class MainBotConfig:
         "treehouse": {"name": "Funky Treehouse"},
         "beach": {"name": "Beach"},
         "miko": {"name": "Miko Borgar"},
+        "comedy": {"name": "Comedy Machine 3000"},
+        "rocket": {"name": "Rocket Launcher Tree"},
     }
     nav_post_zoom_in = {
         "treehouse": 50,
@@ -270,7 +287,7 @@ class MainBotConfig:
     settings_menu_max_click_attempts = 2
     settings_menu_ocr_max_attempts = 2
 
-    sit_button_position = (0.79, 0.89)
+    sit_button_position = SIT_BUTTON_POSITION
     sitting_status = False
 
     taunt_button_position = (0.73, 0.89)
