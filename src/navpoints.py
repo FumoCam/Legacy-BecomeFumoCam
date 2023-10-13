@@ -481,7 +481,7 @@ def _rocket_calib_to_rocket():
     log_process("AutoNav")
     log("Rocket Calibration Rock -> Rocket Tree")
     # Get to the top rock
-    ACFG.leap(forward_time=0.1, jump_time=0.3, direction_key="s", jump_delay=0)
+    ACFG.leap(forward_time=0.2, jump_time=0.1, direction_key="s", jump_delay=0.05)
     ACFG.move("a", 0.1, raw=True)
     ACFG.move("s", 0.3, raw=True)
     ACFG.leap(forward_time=0.1, jump_time=0.3, direction_key="s", jump_delay=0)
@@ -495,7 +495,8 @@ def _rocket_calib_to_rocket():
     # Pickup the rocket launcher
     ACFG.move("s", 0.3, raw=True)
     ACFG.zoom("i", 50)
-    ratio_x, ratio_y = (0.59, 0.66)
+    sleep(0.5)
+    ratio_x, ratio_y = (0.56, 0.64)
     x = round(SCREEN_RES["width"] * ratio_x)
     y = round(SCREEN_RES["height"] * ratio_y)
     ACFG.moveMouseAbsolute(x=x, y=y)

@@ -397,9 +397,19 @@ def test_nav():
 
         # Nav
         # navpoints.main_to_comedy_machine()
-        # navpoints.comedy_spawn_to_rocket()
+        navpoints._rocket_calib_to_rocket()
+        # ACFG.leap(forward_time=0.2, jump_time=0.1, direction_key="s", jump_delay=0.05)
 
-        ACFG.space_and_left_click()
+        # ACFG.space_and_left_click()
+        
+        # ACFG.move("s", 0.3, raw=True)
+        # ACFG.zoom("i", 50)
+        # sleep(0.5)
+        # ratio_x, ratio_y = (0.55, 0.64)
+        # x = round(SCREEN_RES["width"] * ratio_x)
+        # y = round(SCREEN_RES["height"] * ratio_y)
+        # ACFG.moveMouseAbsolute(x=x, y=y)
+        # ACFG.left_click()
 
     asyncio.get_event_loop().run_until_complete(do_test())
 
