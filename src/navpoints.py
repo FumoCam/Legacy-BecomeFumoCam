@@ -1,6 +1,6 @@
 # TODO: Change from functions to variables (like dict or something)
-from random import randint
 import random
+from random import randint
 from time import sleep
 
 from arduino_integration import ACFG

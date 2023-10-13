@@ -7,6 +7,7 @@ import numpy as np
 import pyautogui
 from requests import get
 
+import navpoints
 from actions import mute_toggle, respawn_character
 from arduino_integration import ACFG, CFG
 from config import SCREEN_RES
@@ -24,7 +25,6 @@ from health import (
     ocr_for_settings,
     toggle_collisions,
 )
-import navpoints
 from twitch_integration import twitch_main
 from utilities import check_active, kill_process, take_screenshot_binary_blocking
 
