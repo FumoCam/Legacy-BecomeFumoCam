@@ -79,9 +79,9 @@ def main_to_shrimp_tree():
         jump_delay=0.1,
         diagonal_direction_key="s",
     )
-    # ACFG.zoom("i", ZOOM_FIRST_PERSON)
-    # ACFG.zoom("o", ZOOM_FIRST_PERSON)
-    # ACFG.precision_look("left", 1798, raw=True)
+    ACFG.zoom("i", ZOOM_FIRST_PERSON)
+    ACFG.zoom("o", ZOOM_FIRST_PERSON)
+    ACFG.precision_look("left", 1798, raw=True)
     log_process("")
     log("")
 
