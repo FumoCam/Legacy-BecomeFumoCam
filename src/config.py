@@ -118,6 +118,7 @@ class MainBotConfig:
     character_select_screen_height_to_click = 0
 
     crashed = False
+    initial_startup = True
     collisions_disabled = True
     game_update_timestamp = ""
     # ===END STATE-LIKE VARIABLES===#
