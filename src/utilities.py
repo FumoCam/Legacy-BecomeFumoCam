@@ -237,17 +237,16 @@ async def check_active(
     return False
 
 
-def notify_admin(message: str) -> bool:
+def notify_admin(message: str, do_ping=True) -> bool:
     # TODO: Make !dev a seperate, always-running process
     webhook_url = os.getenv("DISCORD_WEBHOOK_DEV_CHANNEL", None)
     if webhook_url is None:
         return False
-    webhook_data = {
-        "content": (
-            f"<@{os.getenv('DISCORD_OWNER_ID')}>\n{message}\n"
-            f"<https://twitch.tv/{os.getenv('TWITCH_CHAT_CHANNEL')}>"
-        ),
-    }
+    content = f"{message}\n<https://twitch.tv/{os.getenv('TWITCH_CHAT_CHANNEL')}>"
+    if do_ping:
+        content += f"\n<@{os.getenv('DISCORD_OWNER_ID')}>"
+
+    webhook_data = {"content": content}
     result = post(webhook_url, json=webhook_data, timeout=10)
     try:
         result.raise_for_status()
@@ -308,7 +307,11 @@ async def do_crash_check(do_notify=True) -> bool:
     if crashed:
         CFG.crashed = True
         if do_notify:
-            notify_admin("Roblox Crash")
+            if CFG.initial_startup:
+                CFG.initial_startup = False
+                notify_admin("System restart detected", do_ping=False)
+            else:
+                notify_admin("Roblox Crash")
     return crashed
 
 
