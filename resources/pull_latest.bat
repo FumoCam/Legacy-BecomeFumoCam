@@ -8,6 +8,7 @@ echo Updating BecomeFumoCam...
 cd /d %BECOMEFUMOCAM_DIR%
 git fetch --all
 git reset --hard origin/main
+poetry install
 pause
 :: Censor-Client (https://github.com/FumoCam/Whitelist-Censor-Client)
 echo.
@@ -15,6 +16,7 @@ echo Updating Censor-Client...
 cd /d %BECOMEFUMOCAM_DIR%\censor\
 git fetch --all
 git reset --hard origin/main
+poetry install
 pause
 :: HUD (https://github.com/FumoCam/HUD)
 echo.
