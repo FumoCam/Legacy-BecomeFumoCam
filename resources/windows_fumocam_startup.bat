@@ -5,7 +5,7 @@ set BECOMEFUMOCAM_DIR=%USERPROFILE%\Desktop\BecomeFumoCam
 TIMEOUT /T 5
 :: Start OBS
 cd %OBS_DIR%
-start obs64.exe --disable-updater --startstreaming
+start obs64.exe --disable-updater --startstreaming --disable-shutdown-check
 :: Start CensorClient
 echo [System Reboot Detected]> %BECOMEFUMOCAM_DIR%\output\main_process.txt
 echo Please wait. Initializing core systems. (0/3)> %BECOMEFUMOCAM_DIR%\\output\main_status.txt
