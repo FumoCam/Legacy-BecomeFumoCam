@@ -75,7 +75,7 @@ class TwitchBot(commands.Bot):
             notify_admin(f"```{traceback.format_exc()}```")
 
     async def event_command_error(self, ctx: commands.Context, error: Exception):
-        if type(error) == commands.errors.CommandNotFound:
+        if isinstance(error, commands.errors.CommandNotFound):
             await ctx.send("[Not a valid command!]")
             return
         print(f'"{type(error)}"')

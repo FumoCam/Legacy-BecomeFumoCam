@@ -4,13 +4,7 @@ from random import randint
 from time import sleep
 
 from arduino_integration import ACFG
-from config import (
-    BACKPACK_BUTTON_POSITION,
-    BACKPACK_ITEM_POSITIONS,
-    SCREEN_RES,
-    SIT_BUTTON_POSITION,
-    ZOOM_FIRST_PERSON,
-)
+from config import SCREEN_RES, SIT_BUTTON_POSITION, ZOOM_FIRST_PERSON
 from utilities import log, log_process
 
 
@@ -526,7 +520,6 @@ def _rocket_calib_to_rocket():
     ACFG.zoom("i", ZOOM_FIRST_PERSON)
     ACFG.zoom("o", ZOOM_FIRST_PERSON)
     ACFG.precision_look("left", 1798, raw=True)
-
 
     # End of navigation
     log_process("")

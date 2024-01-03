@@ -6,7 +6,7 @@ import os
 import uuid
 from time import strftime
 from traceback import format_exc
-from typing import Dict
+from typing import Any, Dict
 
 import requests
 import websockets.client
@@ -43,7 +43,7 @@ OBS_RPC_VERSION = 1
 started_streaming = False
 
 
-def do_log(message: str):
+def do_log(message: Any):
     timestamp = strftime("%Y-%m-%d %I:%M:%S%p EST")
     print(f"[{timestamp}]\n{message}\n\n")
 
@@ -135,20 +135,25 @@ def compute_auth_response(password: str, salt: str, challenge: str) -> str:
 
 
 async def authenticate(ws: websockets.client.WebSocketClientProtocol):
-    hello_response = json.loads(await ws.recv())
+    hello_response: Dict = json.loads(await ws.recv())
     do_log(hello_response)
 
-    salt = hello_response["d"]["authentication"]["salt"]
-    challenge = hello_response["d"]["authentication"]["challenge"]
+    auth_response: Dict = hello_response.get("d", {}).get("authentication", {})
+    salt: str = str(auth_response.get("salt", ""))
+    challenge: str = str(auth_response.get("challenge", ""))
 
     # Send Identify request with auth response
-    identify_message = {"op": 1, "d": {}}
-    identify_message["d"]["rpcVersion"] = OBS_RPC_VERSION
-    identify_message["d"]["authentication"] = compute_auth_response(
-        OBS_WS_PASSWORD, salt, challenge
-    )
-    # No events, we only care about request/response
-    identify_message["d"]["eventSubscriptions"] = 0
+    assert isinstance(OBS_WS_PASSWORD, str)  # mypy is annoying
+    auth_str = compute_auth_response(OBS_WS_PASSWORD, salt, challenge)
+    identify_message = {
+        "op": 1,
+        "d": {
+            "rpcVersion": OBS_RPC_VERSION,
+            "authentication": auth_str,
+            # No events, we only care about request/response
+            "eventSubscriptions": 0,
+        },
+    }
 
     do_log(json.dumps(identify_message))
     await ws.send(json.dumps(identify_message))
