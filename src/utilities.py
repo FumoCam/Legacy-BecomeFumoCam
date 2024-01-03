@@ -54,7 +54,7 @@ def run_as_admin():
         exit()
 
 
-def error_log(error_msg: str, file_name: str = "_errors", do_print=False):
+def error_log(error_msg: str, file_name: str = "_errors", do_print=True):
     if do_print:
         print(error_msg)
     if not os.path.exists(OBS.output_folder):
