@@ -27,14 +27,14 @@ certifi = ">=2023.7.22" # CVE Fix (CVE-2023-37920)
 gitpython = ">=3.1.35"  # CVE Fix (CVE-2023-41040)
 
 [tool.poetry.group.dev.dependencies]
-black = "^22.10.0"
-bandit = "^1.7.4"
-flake8 = "^5.0.4"
-isort = "^5.10.1"
-mypy = "^0.991"
+black = "^23.12.1"
+bandit = "^1.7.6"
+flake8 = "^6.1.0"
+isort = "^5.13.2"
+mypy = "^1.8.0"
 ossaudit = "^0.5.0"
-types-psutil = "^5.9.5.5"
-types-requests = "^2.28.11.4"
+types-psutil = "^5.9.5.17"
+types-requests = "^2.31.0.20231231"
 types-selenium = "^3.141.9"
 
 [build-system]
