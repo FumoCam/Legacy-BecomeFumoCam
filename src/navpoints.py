@@ -493,33 +493,33 @@ def _rocket_calib_to_rocket():
     ACFG.leap(forward_time=0.3, jump_time=0.5, direction_key="d", jump_delay=0.3)
 
     # Pickup the rocket launcher
-    ACFG.move("s", 0.3, raw=True)
-    ACFG.zoom("i", 50)
-    sleep(0.5)
-    ratio_x, ratio_y = (0.56, 0.64)
-    x = round(SCREEN_RES["width"] * ratio_x)
-    y = round(SCREEN_RES["height"] * ratio_y)
-    ACFG.moveMouseAbsolute(x=x, y=y)
-    ACFG.left_click()
+    # ACFG.move("s", 0.3, raw=True)
+    # ACFG.zoom("i", 50)
+    # sleep(0.5)
+    # ratio_x, ratio_y = (0.56, 0.64)
+    # x = round(SCREEN_RES["width"] * ratio_x)
+    # y = round(SCREEN_RES["height"] * ratio_y)
+    # ACFG.moveMouseAbsolute(x=x, y=y)
+    # ACFG.left_click()
 
     # Open Backpack
-    sleep(0.25)
-    ratio_x, ratio_y = BACKPACK_BUTTON_POSITION
-    x = round(SCREEN_RES["width"] * ratio_x)
-    y = round(SCREEN_RES["height"] * ratio_y)
-    ACFG.moveMouseAbsolute(x=x, y=y)
-    ACFG.left_click()
+    # sleep(0.25)
+    # ratio_x, ratio_y = BACKPACK_BUTTON_POSITION
+    # x = round(SCREEN_RES["width"] * ratio_x)
+    # y = round(SCREEN_RES["height"] * ratio_y)
+    # ACFG.moveMouseAbsolute(x=x, y=y)
+    # ACFG.left_click()
 
     # Equip
-    sleep(0.25)
-    item_x = int(SCREEN_RES["width"] * BACKPACK_ITEM_POSITIONS[1]["x"])
-    item_y = int(SCREEN_RES["height"] * BACKPACK_ITEM_POSITIONS[1]["y"])
-    ACFG.moveMouseAbsolute(x=item_x, y=item_y)
-    ACFG.left_click()
+    # sleep(0.25)
+    # item_x = int(SCREEN_RES["width"] * BACKPACK_ITEM_POSITIONS[1]["x"])
+    # item_y = int(SCREEN_RES["height"] * BACKPACK_ITEM_POSITIONS[1]["y"])
+    # ACFG.moveMouseAbsolute(x=item_x, y=item_y)
+    # ACFG.left_click()
 
     # Reset zoom
-    sleep(0.25)
-    ACFG.zoom("o", ZOOM_FIRST_PERSON)
+    # sleep(0.25)
+    # ACFG.zoom("o", ZOOM_FIRST_PERSON)
 
     # End of navigation
     log_process("")
