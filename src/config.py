@@ -262,6 +262,7 @@ class MainBotConfig:
         "treehouse": 50,
         "train": 30,
         "miko": 0,
+        "rocket": 50,
     }
 
     new_user_msg = (

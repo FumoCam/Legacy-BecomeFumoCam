@@ -521,6 +521,13 @@ def _rocket_calib_to_rocket():
     # sleep(0.25)
     # ACFG.zoom("o", ZOOM_FIRST_PERSON)
 
+    # Face towards the camera
+    ACFG.precision_look("left", 1798, raw=True)
+    ACFG.zoom("i", ZOOM_FIRST_PERSON)
+    ACFG.zoom("o", ZOOM_FIRST_PERSON)
+    ACFG.precision_look("left", 1798, raw=True)
+
+
     # End of navigation
     log_process("")
     log("")
