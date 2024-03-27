@@ -9,7 +9,6 @@ from utilities import CFG, check_active, log, log_process
 
 
 class ArduinoConfig:
-
     interface_baudrate = 9300
     interface_timeout = 0.1
     interface = serial.Serial(baudrate=interface_baudrate, timeout=interface_timeout)
