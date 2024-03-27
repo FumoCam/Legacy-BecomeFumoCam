@@ -1,6 +1,6 @@
 from asyncio import sleep as async_sleep
 from datetime import datetime
-from time import time
+from time import strftime, time
 
 import cv2 as cv
 import numpy as np
@@ -259,8 +259,8 @@ def insert_messages_to_db(messages):
     message_sets = []
     for msg in messages:
         message_set = (
-            msg["time"],
-            msg["time_friendly"],
+            msg.get("time", time()),
+            msg.get("time_friendly", strftime("%Y-%m-%d %I:%M:%S%p")),
             msg["author"],
             msg["message"],
             msg["author_confidence"],
@@ -277,8 +277,8 @@ def insert_interactions_to_db(messages):
     message_sets = []
     for msg in messages:
         message_set = (
-            msg["time"],
-            msg["time_friendly"],
+            msg.get("time", time()),
+            msg.get("time_friendly", strftime("%Y-%m-%d %I:%M:%S%p")),
             msg["author"],
             msg["message"],
             msg["response"],
