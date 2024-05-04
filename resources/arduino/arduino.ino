@@ -232,10 +232,11 @@ void chat_ocr(StaticJsonDocument<MAX_PAYLOAD_LENGTH> payload) {
     Keyboard.write(msg[i]);
     delay(10);
   }
-  delay(50);
+  delay(75);
   Keyboard.write(KEY_RETURN);
-  delay(50);
+  delay(200);
   Keyboard.write('/');
+  delay(75);
 }
 
 void loop() {

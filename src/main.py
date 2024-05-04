@@ -250,12 +250,19 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
             log_process("")
         elif action.name == "ocr_chat":
             CFG.chat_cleared_after_response = False
-            await send_chat("[A.I. v2]", ocr=True)
+            ACFG.keyPress("KEY_RETURN")
             await async_sleep(0.1)
+            await send_chat("[A.I. v2]")
 
             for message in action.values["msgs"]:
-                await send_chat(message, ocr=True)
-            await send_chat("/clear", ocr=True)
+                print(f"Sending AI message: {message}")
+                await async_sleep(0.3)
+                await send_chat(message)
+
+            await async_sleep(0.1)
+            await send_chat("/clear")
+            await async_sleep(0.1)
+            ACFG.keyPress("/")
 
             output_log("chat_ai_title", "[Chat AI]")
             output_log("chat_ai_subtitle", "Active")
