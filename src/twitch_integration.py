@@ -6,7 +6,7 @@ from asyncio import sleep as async_sleep
 from datetime import datetime
 from enum import Enum
 from os import getenv, system
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import aiohttp
 from requests import get, post
@@ -107,8 +107,14 @@ class TwitchBot(commands.Bot):
         command_name = ctx.command.name
         return msg.replace(f"{prefix}{command_name}", "", 1).strip().split()
 
-    async def is_dev(self, author: TwitchChatter):
-        return author.name.lower() in Twitch.admins
+    async def is_dev(self, ctx_author: TwitchChatter|None = None, author_str: str|None = None):
+        author = ""
+        if author_str is not None:
+            author = author_str.lower()
+        else:
+            author = ctx_author.name.lower()
+
+        return author in Twitch.admins
 
     async def run_subroutines(self):
         print("[Twitch] Initializing Subroutines")
@@ -410,6 +416,34 @@ class TwitchBot(commands.Bot):
         )
         await CFG.add_action_queue(action)
 
+    async def check_valid_message_prefix(self, ctx: commands.Context, msg:str) -> str | Literal[False]:
+        assert msg is not None
+        is_dev = await self.is_dev(ctx.author)
+
+        # Disable whisper functionality
+        if msg.startswith("[") or msg.startswith("/w"):
+            await ctx.send("[You do not have permission to whisper.]")
+            return False
+
+        # Make muting dev-only
+        elif msg.startswith("/mute") or msg.startswith("/unmute"):
+            if is_dev:
+                return msg
+            else:
+                await ctx.send("[You do not have permission to mute/unmute.]")
+                return False
+
+        # Allow /e, disable all other commands from twitch
+        elif msg.startswith("/"):
+            if msg.startswith("/e"):
+                return msg
+
+            else:
+                await ctx.send("[Commands are not allowed!]")
+                return False
+
+        return msg
+
     async def messsage_logic(
         self, ctx: commands.Context, msg: str
     ) -> Optional[ActionQueueItem]:
@@ -440,11 +474,16 @@ class TwitchBot(commands.Bot):
         if not censor_response["send_users_message"]:
             return None
 
+
+        prefix_checked_message = await self.check_valid_message_prefix(ctx, censor_response["message"])
+        if prefix_checked_message is False:
+            print("prefix_checked_message exploit check short circuit")
+            return None
         return ActionQueueItem(
             "chat_with_name",
             {
                 "name": f"{censor_response['username']}:",
-                "msgs": [censor_response["message"]],
+                "msgs": [prefix_checked_message],
             },
         )
 
@@ -461,41 +500,25 @@ class TwitchBot(commands.Bot):
                 "[In-game character limit is 100! Please shorten your message.]"
             )
             return
-        is_dev = await self.is_dev(ctx.message.author)
 
-        # Disable whisper functionality
-        if msg.startswith("[") or msg.startswith("/w"):
-            await ctx.send("[You do not have permission to whisper.]")
+        prefix_checked_message = await self.check_valid_message_prefix(ctx, msg)
+        if prefix_checked_message is False:
+            print("prefix_checked_message initial check short circuit")
             return
 
-        # Make muting dev-only
-        elif msg.startswith("/mute") or msg.startswith("/unmute"):
-            if is_dev:
-                action = ActionQueueItem("chat", {"msgs": [msg]})
-            else:
-                await ctx.send("[You do not have permission to mute/unmute.]")
+        try:
+            potential_action = await self.messsage_logic(ctx, msg)
+            if potential_action is None:
                 return
-
-        # Allow /e, disable all other commands from twitch
-        elif msg.startswith("/"):
-            if msg.startswith("/e"):
-                action = ActionQueueItem("chat", {"msgs": [msg]})
-            else:
-                return
-        else:
-            try:
-                potential_action = await self.messsage_logic(ctx, msg)
-                if potential_action is None:
-                    return
-                action = potential_action  # HACK: MyPy can be weird
-            except Exception as e:
-                error_msg = f"Censor Service Client Failure\n{e}"
-                error_log(error_msg, do_print=True)
-                await ctx.send(
-                    "[Something went wrong, can't send a message. Contacting dev...]"
-                )
-                notify_admin(error_msg)
-                return
+            action = potential_action  # HACK: MyPy can be weird
+        except Exception as e:
+            error_msg = f"Censor Service Client Failure\n{e}"
+            error_log(error_msg, do_print=True)
+            await ctx.send(
+                "[Something went wrong, can't send a message. Contacting dev...]"
+            )
+            notify_admin(error_msg)
+            return
 
         await self.do_discord_log(ctx.message, is_chat=True)
         await CFG.add_action_queue(action)
