@@ -24,7 +24,7 @@ jobs:
       - name: Set up Poetry
         uses: abatilo/actions-poetry@v2.0.0
         with:
-          poetry-version: 1.5.1
+          poetry-version: 1.8.3
 
       # Poetry has intermittent failures on windows
       # https://github.com/python-poetry/poetry/issues/7611
