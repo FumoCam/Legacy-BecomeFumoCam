@@ -27,7 +27,7 @@ certifi = ">=2023.7.22" # CVE Fix (CVE-2023-37920)
 gitpython = ">=3.1.35"  # CVE Fix (CVE-2023-41040)
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.12.1"
+black = "^24.3.0"
 bandit = "^1.7.6"
 flake8 = "^6.1.0"
 isort = "^5.13.2"
