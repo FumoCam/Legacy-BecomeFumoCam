@@ -331,9 +331,11 @@ async def discord_log(
         screenshot_filename = await take_screenshot()
 
     webhook_urls = [
-        os.getenv("DISCORD_WEBHOOK_CHAT_CHANNEL")
-        if is_chat_log
-        else os.getenv("DISCORD_WEBHOOK_LOG_CHANNEL"),
+        (
+            os.getenv("DISCORD_WEBHOOK_CHAT_CHANNEL")
+            if is_chat_log
+            else os.getenv("DISCORD_WEBHOOK_LOG_CHANNEL")
+        ),
     ]
 
     webhook_data = {

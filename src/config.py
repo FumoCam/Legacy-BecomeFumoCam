@@ -351,8 +351,12 @@ class MainBotConfig:
     zoom_level: float = 50  # TODO: validate this is roughly correct on spawn
     zoom_max: float = 100
     zoom_min: float = 0
-    zoom_ui_min: float = 30  # If lower, zoom out when interacting with UI (No CV needed, just get out of first person)
-    zoom_out_ui: float = 10  # Amount to zoom out when interacting with UI (No CV needed, just get out of first person)
+    zoom_ui_min: float = (
+        30  # If lower, zoom out when interacting with UI (No CV needed, just get out of first person)
+    )
+    zoom_out_ui: float = (
+        10  # Amount to zoom out when interacting with UI (No CV needed, just get out of first person)
+    )
     zoom_ui_min_cv: float = (
         50  # If lower, zoom out when interacting with UI (Computervision)
     )
