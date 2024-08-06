@@ -113,8 +113,17 @@ class TwitchBot(commands.Bot):
         author = ""
         if author_str is not None:
             author = author_str.lower()
-        else:
+        elif ctx_author is not None:
             author = ctx_author.name.lower()
+        else:
+            try:
+                # HACK/FIXME: Get traceback without raising an exception
+                raise Exception("")
+            except Exception:
+                error_msg = f"ctx_author and author_str were BOTH None in is_dev. Traceback:\n{traceback.format_exc()}"
+                error_log(error_msg)
+                notify_admin(error_msg)
+                return False
 
         return author in Twitch.admins
 

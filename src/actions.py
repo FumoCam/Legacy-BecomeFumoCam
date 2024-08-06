@@ -115,7 +115,7 @@ async def _mute_toggle(set_mute: Union[bool, None] = None):
 
 async def mute_toggle(set_mute: Union[bool, None] = None):
     try:
-        _mute_toggle(set_mute=set_mute)
+        await _mute_toggle(set_mute=set_mute)
     except Exception:
         error_msg = (
             f"Error in `mute_toggle(set_mute={set_mute})`. Traceback:\n{format_exc()}"

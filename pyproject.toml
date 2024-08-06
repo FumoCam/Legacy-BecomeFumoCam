@@ -8,7 +8,7 @@ authors = []
 python = "^3.11"
 python-dotenv = "^0.20.0" # Allow reading .env file
 twitchio = "^2.6.0"       # Twitch communication wrapper
-requests = "^2.31.0"      # Game API queries
+requests = "^2.32.0"      # Game API queries
 selenium = "^4.10.0"      # Game launcher
 psutil = "^5.9.1"         # TODO: Remove, ONLY uses process_iter for `is_process_running`
 pyserial = "^3.5"         # Hardware-Driven Input Emulation (Arduino)
@@ -21,20 +21,21 @@ pytesseract = "^0.3.10"   # OCR
 Levenshtein = "^0.20.2"   # Used for fuzzy-matching text (specifically, in OCR)
 websockets = "^10.3"      # HUD
 # CVE Hardcoded Fixes
-aiohttp = ">=3.8.5"     # CVE Fix
-pillow = ">=9.3.0"      # CVE Fix
-certifi = ">=2023.7.22" # CVE Fix (CVE-2023-37920)
-gitpython = ">=3.1.35"  # CVE Fix (CVE-2023-41040)
+aiohttp = ">=3.8.5"    # CVE Fix
+pillow = ">=9.3.0"     # CVE Fix
+certifi = ">2023.7.22" # CVE Fix (CVE-2023-37920)
+gitpython = ">=3.1.35" # CVE Fix (CVE-2023-41040)
+urllib3 = ">2.0.7"     # CVE Fix (CVE-2024-37891)
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.12.1"
-bandit = "^1.7.6"
-flake8 = "^6.1.0"
+black = "^24.8.0"
+bandit = "^1.7.9"
+flake8 = "^7.1.1"
 isort = "^5.13.2"
-mypy = "^1.8.0"
-ossaudit = "^0.5.0"
-types-psutil = "^5.9.5.17"
-types-requests = "^2.31.0.20231231"
+mypy = "1.11.1"
+ossaudit = "0.5.0"
+types-psutil = "^6.0.0.20240621"
+types-requests = "^2.32.0.20240712"
 types-selenium = "^3.141.9"
 
 [build-system]
