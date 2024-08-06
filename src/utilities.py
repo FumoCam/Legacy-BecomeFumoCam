@@ -148,7 +148,9 @@ def kill_process(executable: str = "RobloxPlayerBeta.exe", force: bool = False):
         process_call.append(executable)
         call_proc(process_call)  # nosec
     except Exception:
-        error_msg = f"Failed to kill process '{str(executable)}'. Traceback:\n{format_exc()}"
+        error_msg = (
+            f"Failed to kill process '{str(executable)}'. Traceback:\n{format_exc()}"
+        )
         error_log(error_msg)
         notify_admin(error_msg)
 

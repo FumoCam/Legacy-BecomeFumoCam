@@ -112,13 +112,17 @@ async def _mute_toggle(set_mute: Union[bool, None] = None):
     log_process("")
     log("")
 
+
 async def mute_toggle(set_mute: Union[bool, None] = None):
     try:
         _mute_toggle(set_mute=set_mute)
     except Exception:
-        error_msg = f"Error in `mute_toggle(set_mute={set_mute})`. Traceback:\n{format_exc()}"
+        error_msg = (
+            f"Error in `mute_toggle(set_mute={set_mute})`. Traceback:\n{format_exc()}"
+        )
         error_log(error_msg)
         notify_admin(error_msg)
+
 
 async def test_chat_mouse_pos(
     target_x: int, target_y: int

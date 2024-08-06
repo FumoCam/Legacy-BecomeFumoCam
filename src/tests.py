@@ -418,7 +418,7 @@ if __name__ == "__main__":
     pyautogui.FAILSAFE = False
     # If account banned
     test_get_cookies_for_browser()
-    
+
     # Other misc stuff
     # test_nav()
     # test_character_select_full()

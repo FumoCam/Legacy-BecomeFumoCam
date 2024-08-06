@@ -107,7 +107,9 @@ class TwitchBot(commands.Bot):
         command_name = ctx.command.name
         return msg.replace(f"{prefix}{command_name}", "", 1).strip().split()
 
-    async def is_dev(self, ctx_author: TwitchChatter|None = None, author_str: str|None = None):
+    async def is_dev(
+        self, ctx_author: TwitchChatter | None = None, author_str: str | None = None
+    ):
         author = ""
         if author_str is not None:
             author = author_str.lower()
@@ -416,7 +418,9 @@ class TwitchBot(commands.Bot):
         )
         await CFG.add_action_queue(action)
 
-    async def check_valid_message_prefix(self, ctx: commands.Context, msg:str) -> str | Literal[False]:
+    async def check_valid_message_prefix(
+        self, ctx: commands.Context, msg: str
+    ) -> str | Literal[False]:
         assert msg is not None
         is_dev = await self.is_dev(ctx.author)
 
@@ -474,8 +478,9 @@ class TwitchBot(commands.Bot):
         if not censor_response["send_users_message"]:
             return None
 
-
-        prefix_checked_message = await self.check_valid_message_prefix(ctx, censor_response["message"])
+        prefix_checked_message = await self.check_valid_message_prefix(
+            ctx, censor_response["message"]
+        )
         if prefix_checked_message is False:
             print("prefix_checked_message exploit check short circuit")
             return None
