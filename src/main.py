@@ -290,7 +290,10 @@ async def async_main():
     print("[Async_Main] Start")
     output_log("chat_ai_title", "")
     output_log("chat_ai_subtitle", "")
-    await CFG.add_action_queue(ActionQueueItem("mute", {"set_muted": False}))
+    await mute_toggle(set_mute=False)
+
+    # Start the sequence
+    await do_process_queue()
 
 
 def main():

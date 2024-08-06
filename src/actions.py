@@ -3,6 +3,7 @@ from asyncio import sleep as async_sleep
 from shutil import copyfile
 from subprocess import Popen  # nosec
 from time import sleep
+from traceback import format_exc
 from typing import Tuple, Union
 
 from pyautogui import position as get_mouse_position
@@ -11,6 +12,7 @@ from arduino_integration import ACFG, CFG
 from config import OBS
 from utilities import (
     check_active,
+    error_log,
     kill_process,
     log,
     log_process,
@@ -65,10 +67,11 @@ async def respawn_character(notify_chat: bool = True):
     log_process("")
 
 
-async def mute_toggle(set_mute: Union[bool, None] = None):
+async def _mute_toggle(set_mute: Union[bool, None] = None):
     log_process("In-game Mute")
     desired_mute_state = not CFG.audio_muted
     if set_mute is not None:  # If specified, force to state
+        print(f"Forcing mute to state: {set_mute}")
         desired_mute_state = set_mute
     desired_volume = 0 if desired_mute_state else 100
     log_msg = "Muting" if desired_mute_state else "Un-muting"
@@ -109,6 +112,13 @@ async def mute_toggle(set_mute: Union[bool, None] = None):
     log_process("")
     log("")
 
+async def mute_toggle(set_mute: Union[bool, None] = None):
+    try:
+        _mute_toggle(set_mute=set_mute)
+    except Exception:
+        error_msg = f"Error in `mute_toggle(set_mute={set_mute})`. Traceback:\n{format_exc()}"
+        error_log(error_msg)
+        notify_admin(error_msg)
 
 async def test_chat_mouse_pos(
     target_x: int, target_y: int

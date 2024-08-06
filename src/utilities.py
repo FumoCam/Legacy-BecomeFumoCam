@@ -140,12 +140,17 @@ def take_screenshot_binary_blocking(monitor: Union[Dict, None] = None) -> Screen
 
 def kill_process(executable: str = "RobloxPlayerBeta.exe", force: bool = False):
     # TODO: taskkill.exe can fail, how can we kill the thing that should kill? https://i.imgur.com/jd01ZOv.png
-    process_call = ["taskkill"]
-    if force:
-        process_call.append("/F")
-    process_call.append("/IM")
-    process_call.append(executable)
-    call_proc(process_call)  # nosec
+    try:
+        process_call = ["taskkill"]
+        if force:
+            process_call.append("/F")
+        process_call.append("/IM")
+        process_call.append(executable)
+        call_proc(process_call)  # nosec
+    except Exception:
+        error_msg = f"Failed to kill process '{str(executable)}'. Traceback:\n{format_exc()}"
+        error_log(error_msg)
+        notify_admin(error_msg)
 
 
 async def check_active(
