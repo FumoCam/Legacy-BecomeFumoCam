@@ -487,14 +487,21 @@ class TwitchBot(commands.Bot):
         if not censor_response["send_users_message"]:
             return None
 
+        proper_censor_response = censor_response["message"]
+        is_prefixed = msg.startswith("/")
+        if is_prefixed:
+            proper_censor_response = f"/{proper_censor_response}"
+
         prefix_checked_message = await self.check_valid_message_prefix(
-            ctx, censor_response["message"]
+            ctx, proper_censor_response
         )
         if prefix_checked_message is False:
             print("prefix_checked_message exploit check short circuit")
             return None
+
+        action_queue_name = "chat" if is_prefixed else "chat_with_name"
         return ActionQueueItem(
-            "chat_with_name",
+            action_queue_name,
             {
                 "name": f"{censor_response['username']}:",
                 "msgs": [prefix_checked_message],
