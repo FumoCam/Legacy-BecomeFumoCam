@@ -154,7 +154,10 @@ async def get_current_server_id(game_id: int = CFG.game_id, is_sub_realm=False) 
         if current_server_id != "ERROR":
             print(f"Current Server ID is not error: {current_server_id}")
         return current_server_id
+
     print("Returning Error on base")
+    print(response.status_code)
+    print(response.json())
     return "ERROR"
 
 
