@@ -365,7 +365,7 @@ def test_move_mouse():
 
 
 def test_bare_roblox_api():
-    game_id = 7363647365
+    game_id = 6238705697
     url = f"https://games.roblox.com/v1/games/{game_id}/servers/Public"
     response = get(url, timeout=10)
     if response.status_code == 200:
@@ -417,7 +417,7 @@ def test_nav():
 if __name__ == "__main__":
     pyautogui.FAILSAFE = False
     # If account banned
-    test_get_cookies_for_browser()
+    # test_get_cookies_for_browser()
 
     # Other misc stuff
     # test_nav()
@@ -445,7 +445,7 @@ if __name__ == "__main__":
     # test_character_select()
     # test_character_select_full()
     # test_check_for_better_server()
-    # test_bare_roblox_api()
+    test_bare_roblox_api()
     # test_character_select_full(click_mouse=True)
     # test_force_respawn()
     # test_toggle_collisions()

@@ -142,6 +142,8 @@ async def get_current_server_id(game_id: int = CFG.game_id, is_sub_realm=False) 
         return "ERROR"
     if response.status_code == 200:
         response_result = response.json()
+        print(response.status_code)
+        print(response_result)
         servers = response_result["data"]
         if len(servers) == 0:
             print("No servers found")
@@ -169,6 +171,7 @@ async def check_for_better_server():
 
     log_process("Checking for better server")
     current_server_id = await get_current_server_id()
+    print(f"current_server_id1 {current_server_id}")
     if current_server_id == "ERROR":
         for i in range(CFG.max_attempts_better_server):
             log_process(
@@ -176,6 +179,7 @@ async def check_for_better_server():
             )
             await async_sleep(10)
             current_server_id = await get_current_server_id()
+            print(f"current_server_id2 {current_server_id}")
             if current_server_id != "ERROR":
                 break
     if current_server_id == "ERROR":
@@ -198,7 +202,8 @@ async def check_for_better_server():
         print("\n\n\n\n")
         if current_server_id == "N/A":
             log_process("Could not find FumoCam in any servers")
-            await CFG.add_action_queue(ActionQueueItem("handle_crash"))
+            # print("Handling crash by `health.py`")
+            # await CFG.add_action_queue(ActionQueueItem("handle_crash"))
             return False
         else:
             log_process("")

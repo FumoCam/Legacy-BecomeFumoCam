@@ -623,13 +623,16 @@ class TwitchBot(commands.Bot):
 
     @commands.command()
     async def rejoin(self, ctx: commands.Context):
-        if await self.is_dev(ctx.author):
-            await ctx.send(f"[@{ctx.author.name} Added restart to queue]")
-            CFG.crashed = True
-            await CFG.add_action_queue(ActionQueueItem("rejoin"))
-            CFG.crashed = False
-        else:
-            await ctx.send("[You do not have permission!]")
+        # if await self.is_dev(ctx.author):
+        #     await ctx.send(f"[@{ctx.author.name} Added restart to queue]")
+        #     CFG.crashed = True
+        #     await CFG.add_action_queue(ActionQueueItem("rejoin"))
+        #     CFG.crashed = False
+        # else:
+        #     await ctx.send("[You do not have permission!]")
+        CFG.crashed = True
+        await CFG.add_action_queue(ActionQueueItem("rejoin"))
+        CFG.crashed = False
 
     async def zoom_handler(self, zoom_key, ctx: commands.Context):
         zoom_amount: float = 15
@@ -765,6 +768,7 @@ async def routine_crash_check():
         crashed = await do_crash_check()
         if crashed:
             print("[Routine] Crash detected")
+            print("Handling crash by `routine_crash_check`")
             await CFG.add_action_queue(ActionQueueItem("handle_crash"))
             await async_sleep(60)
     except Exception:

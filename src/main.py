@@ -132,6 +132,7 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
                 await check_for_better_server()
                 await check_active()
             else:
+                print("Handling crash by `main.py`")
                 CFG.action_queue.insert(1, ActionQueueItem("handle_crash"))
         elif action.name == "chat":
             for message in action.values["msgs"]:
