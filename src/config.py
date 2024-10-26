@@ -232,6 +232,18 @@ class MainBotConfig:
             # 3876348683, # SBFCam_06
         ]
     }
+    cookies_str = ""
+    try:
+        with open(browser_cookies_path, "r", encoding="utf-8") as f:
+            _cookies = json.load(f)
+        _cookie_str_vals = []
+        for cookie in _cookies:
+            str_val = f"{cookie['name']}={cookie['value']}"
+            _cookie_str_vals.append(str_val)
+        cookies_str = "; ".join(_cookie_str_vals)
+    except FileNotFoundError:
+        print("COOKIES PATH NOT FOUND, INITIALIZE WITH TEST FIRST")
+        raise
 
     game_update_file = OBS.output_folder / "last_game_update.json"
     try:

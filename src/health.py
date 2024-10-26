@@ -37,6 +37,7 @@ from spawn_detection import spawn_detection_main
 from utilities import (
     check_active,
     do_crash_check,
+    error_log,
     is_process_running,
     kill_process,
     log,
@@ -203,7 +204,7 @@ async def get_current_server_id(attempt_num=1) -> str:
     current_server_id = "N/A"
     url = f"https://presence.roblox.com/v1/presence/users"
     try:
-        response = post(url, data=CFG.presence_req_body, timeout=10)
+        response = post(url, json=CFG.presence_req_body, headers={"Cookie":CFG.cookies_str}, timeout=10)
     except Exception:
         print(format_exc())
         print("Returning Error on try")
@@ -212,8 +213,17 @@ async def get_current_server_id(attempt_num=1) -> str:
         response_result = response.json()
         print(response.status_code)
         print(response_result)
+        print(response.request.body)
+        print(response.request.headers)
         presences = response_result["userPresences"]
         for user in presences:
+            if user["userPresenceType"] == 2 and user["rootPlaceId"] is None:
+                error_msg = (
+                    f"Error in getting current server id:\n```{json.dumps(response_result)}```"
+                )
+                error_log(error_msg)
+                notify_admin(error_msg)
+                return "ERROR"
             if user["rootPlaceId"] == CFG.game_id:
                 current_server_id = user["gameId"]
                 break
