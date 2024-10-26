@@ -7,7 +7,7 @@ from typing import Dict, Tuple, Union
 import cv2 as cv
 import numpy as np
 import pytesseract
-from requests import get
+from requests import get, post
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 
@@ -88,10 +88,10 @@ async def check_if_should_change_servers(
             current_server_id = ""
         for server in servers:
             server_id = server.get("id", "undefined")
-            if server.get("playerTokens") is None:
+            if server.get("playing") is None:
                 server_playing = -1
             else:
-                server_playing = len(server["playerTokens"])
+                server_playing = int(server["playing"])
             if server_id == "undefined" or server_playing == -1:
                 notify_admin(
                     f"Handled Error in `check_if_should_change_servers`\nServers:\n`{servers}`\nProblem:\n`{server}`"
@@ -102,7 +102,7 @@ async def check_if_should_change_servers(
                 current_server_id = server_id
                 current_server_playing = server_playing
             elif (
-                "playerTokens" in server
+                "playing" in server
                 and server_playing > highest_player_server_playing
             ):
                 highest_player_server_playing = server_playing
@@ -131,11 +131,79 @@ async def check_if_should_change_servers(
     return False, "[WARN] Could not poll Roblox servers. Is Roblox down?"
 
 
-async def get_current_server_id(game_id: int = CFG.game_id, is_sub_realm=False) -> str:
+# async def get_current_server_id(game_id: int = CFG.game_id, is_sub_realm=False) -> str:
+#     current_server_id = "N/A"
+#     url = f"https://games.roblox.com/v1/games/{game_id}/servers/Public"
+#     try:
+#         response = get(url, timeout=10)
+#     except Exception:
+#         print(format_exc())
+#         print("Returning Error on try")
+#         return "ERROR"
+#     if response.status_code == 200:
+#         response_result = response.json()
+#         print(response.status_code)
+#         print(response_result)
+#         servers = response_result["data"]
+#         if len(servers) == 0:
+#             print("No servers found")
+#             print("Returning Error on No Servers Found")
+#             return "ERROR"
+#         for server in servers:
+#             if CFG.player_id in server["playerTokens"]:
+#                 current_server_id = server["id"]
+#                 break
+#         if current_server_id != "ERROR":
+#             print(f"Current Server ID is not error: {current_server_id}")
+#         return current_server_id
+
+#     print("Returning Error on base")
+#     print(response.status_code)
+#     print(response.json())
+#     return "ERROR"
+
+
+# # Online
+# {
+#   "userPresences": [
+#     {
+#       "userPresenceType": 2,
+#       "lastLocation": "Become Fumo",
+#       "placeId": 6238705697,
+#       "rootPlaceId": 6238705697,
+#       "gameId": "9351caca-0617-4795-b2ab-39f49b4c9619",
+#       "universeId": 2291704236,
+#       "userId": 2558280992,
+#       "lastOnline": "2024-10-26T07:14:27.557Z"
+#     },
+#   ]
+# }
+
+# # Offline
+# {
+#     [
+#         {
+#         "userPresenceType": 0,
+#         "lastLocation": "Website",
+#         "placeId": null,
+#         "rootPlaceId": null,
+#         "gameId": null,
+#         "universeId": null,
+#         "userId": 3876348683,
+#         "lastOnline": "2024-10-26T07:01:12.297Z"
+#         }
+#     ]
+# }
+
+# # In another dimension:
+#   "placeId": 10290646947,
+#   "rootPlaceId": 6238705697,
+
+async def get_current_server_id(attempt_num=1) -> str:
     current_server_id = "N/A"
-    url = f"https://games.roblox.com/v1/games/{game_id}/servers/Public"
+    url = f"https://presence.roblox.com/v1/presence/users"
     try:
-        response = get(url, timeout=10)
+        response = post(url, data=CFG.presence_req_body, timeout=10)
     except Exception:
         print(format_exc())
         print("Returning Error on try")
@@ -144,18 +212,28 @@ async def get_current_server_id(game_id: int = CFG.game_id, is_sub_realm=False) 
         response_result = response.json()
         print(response.status_code)
         print(response_result)
-        servers = response_result["data"]
-        if len(servers) == 0:
-            print("No servers found")
-            print("Returning Error on No Servers Found")
-            return "ERROR"
-        for server in servers:
-            if CFG.player_id in server["playerTokens"]:
-                current_server_id = server["id"]
+        presences = response_result["userPresences"]
+        for user in presences:
+            if user["rootPlaceId"] == CFG.game_id:
+                current_server_id = user["gameId"]
                 break
         if current_server_id != "ERROR":
             print(f"Current Server ID is not error: {current_server_id}")
         return current_server_id
+
+    # Try handle rate limit (TODO: test it, as it might not be enough)
+    if response.status_code == 429:
+        if attempt_num < 3:
+            backoff_time = 5*attempt_num
+            new_attempt_num = attempt_num + 1
+            print(f"429 hit, attempt #{new_attempt_num} in {backoff_time}s")
+            await async_sleep(5*attempt_num)
+            current_server_id = await get_current_server_id(attempt_num=attempt_num + 1)
+            return current_server_id
+        else:
+            backoff_time = 5*(attempt_num-1)
+            print(f"Failed to un-ratelimit after 429 hit ({attempt_num} attempts, {backoff_time}s waited)")
+            return "ERROR"
 
     print("Returning Error on base")
     print(response.status_code)
@@ -190,20 +268,11 @@ async def check_for_better_server():
         log_process("")
         return True
     if current_server_id == "N/A":
-        for experience_id, experience_name in CFG.game_ids_other.items():
-            print(f"OTHER ID: {experience_id}")
-            other_server_id = await get_current_server_id(experience_id)
-            print(f"CurrentServerID Output: {other_server_id}")
-            if other_server_id not in {"N/A", "ERROR"}:
-                current_server_id = other_server_id
-                log(f"Success, FumoCam found in other experience ({experience_name})")
-                await async_sleep(3)
-                break
         print("\n\n\n\n")
         if current_server_id == "N/A":
             log_process("Could not find FumoCam in any servers")
-            # print("Handling crash by `health.py`")
-            # await CFG.add_action_queue(ActionQueueItem("handle_crash"))
+            print("Handling crash by `health.py`")
+            await CFG.add_action_queue(ActionQueueItem("handle_crash"))
             return False
         else:
             log_process("")

@@ -221,6 +221,17 @@ class MainBotConfig:
     game_instances_url = (
         "https://www.roblox.com/games/6238705697/Become-Fumo#!/game-instances"
     )
+    presence_req_body = {
+        "userIds": [
+            2558280992, # F_umoCam02
+            3045394671, # F_umoCam05
+            # 3405264198, # SBFCam_01
+            # 3405266379, # SBFCam_02
+            # 3552722205, # SBFCam_03
+            # 3554945279, # SBFCam_05
+            # 3876348683, # SBFCam_06
+        ]
+    }
 
     game_update_file = OBS.output_folder / "last_game_update.json"
     try:
@@ -270,8 +281,6 @@ class MainBotConfig:
         "Welcome, {user_mention}! This is a bot you can control with chat commands."
     )
 
-    player_id = os.getenv("PLAYER_ID")
-    # player_user_id = os.getenv("PLAYER_USER_ID")
     player_switch_cap = 50
     player_difference_to_switch = 15
     pytesseract_path = os.path.join(

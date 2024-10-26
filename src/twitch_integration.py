@@ -696,7 +696,7 @@ async def routine_anti_afk():
         error_log(traceback.format_exc())
 
 
-@routines.routine(minutes=3)
+@routines.routine(minutes=1)
 async def routine_check_better_server():
     print("[Subroutine] Better Server Check")
     try:
