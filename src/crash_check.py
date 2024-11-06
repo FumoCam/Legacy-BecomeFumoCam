@@ -1,3 +1,4 @@
+import json
 from time import sleep, strftime
 from typing import Dict, List, Optional, cast
 from mss.screenshot import ScreenShot
@@ -209,9 +210,10 @@ def check_if_still_online() -> bool:
 
     # Final results
     CUTOFF = 98
-    likely_crashed = percentage > CUTOFF
-    log_crashcheck(f"[main] Result: {'Likely crashed' if likely_crashed else 'Likely online'}")
-    return likely_crashed
+    likely_online = percentage <= CUTOFF
+    log_crashcheck(f"[main] Result: {'Likely online' if likely_online else 'Likely crashed'}")
+    return likely_online
 
 if __name__ == "__main__":
-    check_if_still_online()
+    result = check_if_still_online()
+    print(json.dumps(result)) # For rust to read console output
