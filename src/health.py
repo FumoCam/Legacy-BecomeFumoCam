@@ -14,6 +14,7 @@ from selenium.webdriver.chrome.service import Service
 from actions import respawn_character, send_chat
 from commands import ACFG, CFG
 from config import OBS, ZOOM_FIRST_PERSON, ActionQueueItem
+from crash_check import check_if_still_online
 from navpoints import (  # TODO: Make this better/scalable
     comedy_spawn_calibration,
     comedy_spawn_to_comedy_machine,
@@ -278,9 +279,11 @@ async def check_for_better_server():
         log_process("")
         return True
     if current_server_id == "N/A":
+        is_likely_online = check_if_still_online()
         print("\n\n\n\n")
-        if current_server_id == "N/A":
-            log_process("Could not find FumoCam in any servers")
+        if not is_likely_online:
+            log_process("Could not find FumoCam in any servers, and likely crash")
+            notify_admin("Likely crash, API failure and visual confirmation")
             print("Handling crash by `health.py`")
             await CFG.add_action_queue(ActionQueueItem("handle_crash"))
             return False
