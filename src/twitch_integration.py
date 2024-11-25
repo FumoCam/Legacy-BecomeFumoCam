@@ -448,10 +448,16 @@ class TwitchBot(commands.Bot):
 
         # Allow /e, disable all other commands from twitch
         elif msg.startswith("/"):
-            if msg.startswith("/e"):
-                return msg
+            actual_msg = msg
+            if msg.startswith("//"):
+                # FIXME: Hotfix, sometimes /e becomes //e?
+                actual_msg = msg.replace("//","/",1)
+
+            if actual_msg.startswith("/e"):
+                return actual_msg
 
             else:
+                print(f"DEBUG: actual_msg='{actual_msg}'")
                 await ctx.send("[Commands are not allowed!]")
                 return False
 
