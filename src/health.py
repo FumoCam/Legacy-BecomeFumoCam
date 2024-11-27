@@ -84,7 +84,11 @@ async def check_if_should_change_servers(
     if response.status_code == 200:
         log("Finding best server and comparing to current...")
 
-        response_result = response.json()
+        try:
+            response_result = response.json()
+        except:
+            return False, "[WARN] Failed to parse Roblox server JSON. Is Roblox malfunctioning?"
+
         servers = response_result["data"]
         if current_server_id == "N/A":
             current_server_id = ""
@@ -132,71 +136,6 @@ async def check_if_should_change_servers(
             return False, ""
     return False, "[WARN] Could not poll Roblox servers. Is Roblox down?"
 
-
-# async def get_current_server_id(game_id: int = CFG.game_id, is_sub_realm=False) -> str:
-#     current_server_id = "N/A"
-#     url = f"https://games.roblox.com/v1/games/{game_id}/servers/Public"
-#     try:
-#         response = get(url, timeout=10)
-#     except Exception:
-#         print(format_exc())
-#         print("Returning Error on try")
-#         return "ERROR"
-#     if response.status_code == 200:
-#         response_result = response.json()
-#         print(response.status_code)
-#         print(response_result)
-#         servers = response_result["data"]
-#         if len(servers) == 0:
-#             print("No servers found")
-#             print("Returning Error on No Servers Found")
-#             return "ERROR"
-#         for server in servers:
-#             if CFG.player_id in server["playerTokens"]:
-#                 current_server_id = server["id"]
-#                 break
-#         if current_server_id != "ERROR":
-#             print(f"Current Server ID is not error: {current_server_id}")
-#         return current_server_id
-
-#     print("Returning Error on base")
-#     print(response.status_code)
-#     print(response.json())
-#     return "ERROR"
-
-
-# # Online
-# {
-#   "userPresences": [
-#     {
-#       "userPresenceType": 2,
-#       "lastLocation": "Become Fumo",
-#       "placeId": 6238705697,
-#       "rootPlaceId": 6238705697,
-#       "gameId": "9351caca-0617-4795-b2ab-39f49b4c9619",
-#       "universeId": 2291704236,
-#       "userId": 2558280992,
-#       "lastOnline": "2024-10-26T07:14:27.557Z"
-#     },
-#   ]
-# }
-
-# # Offline
-# {
-#     [
-#         {
-#         "userPresenceType": 0,
-#         "lastLocation": "Website",
-#         "placeId": null,
-#         "rootPlaceId": null,
-#         "gameId": null,
-#         "universeId": null,
-#         "userId": 3876348683,
-#         "lastOnline": "2024-10-26T07:01:12.297Z"
-#         }
-#     ]
-# }
-
 # # In another dimension:
 #   "placeId": 10290646947,
 #   "rootPlaceId": 6238705697,
@@ -211,7 +150,13 @@ async def get_current_server_id(attempt_num=1) -> str:
         print("Returning Error on try")
         return "ERROR"
     if response.status_code == 200:
-        response_result = response.json()
+        try:
+            response_result = response.json()
+        except:
+            print(format_exc())
+            print("Error on response json")
+            return "ERROR"
+
         print(response.status_code)
         print(response_result)
         print(response.request.body)
@@ -248,7 +193,13 @@ async def get_current_server_id(attempt_num=1) -> str:
 
     print("Returning Error on base")
     print(response.status_code)
-    print(response.json())
+    try:
+        resp_json = response.json()
+        print(resp_json)
+    except:
+        print("Error attempting to get resp json")
+        print(response.text)
+
     return "ERROR"
 
 
@@ -402,7 +353,12 @@ async def get_best_server(get_worst: bool = False) -> Dict:
     url = f"https://games.roblox.com/v1/games/{CFG.game_id}/servers/Public"
     response = get(url, timeout=10)
     if response.status_code == 200:
-        response_result = response.json()
+        try:
+            response_result = response.json()
+        except:
+            print("Error in getting response json")
+            return {}
+
         servers = response_result["data"]
         for server in servers:
             if "playerTokens" in server:

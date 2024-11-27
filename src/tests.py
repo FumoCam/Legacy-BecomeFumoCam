@@ -370,6 +370,7 @@ def test_bare_roblox_api():
     response = get(url, timeout=10)
     if response.status_code == 200:
         response_result = response.json()
+
         servers = response_result["data"]
         if len(servers) == 0:
             print("No servers found")
@@ -382,7 +383,7 @@ def test_bare_roblox_api():
                 print("\n\n\n")
     else:
         print("Error with API")
-        print(response.text())
+        print(response.text)
 
 
 def test_nav():

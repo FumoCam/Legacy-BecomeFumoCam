@@ -6,7 +6,7 @@ from asyncio import sleep as async_sleep
 from datetime import datetime
 from enum import Enum
 from os import getenv, system
-from typing import Literal, Optional, Union
+from typing import Dict, Literal, Optional, Union
 
 import aiohttp
 from requests import get, post
@@ -795,7 +795,13 @@ def get_gamemode_update_timestamp() -> Union[None, str]:
         return None
 
     if response.status_code == 200:
-        response_result = response.json()
+        try:
+            response_result: Dict = response.json()
+        except:
+            print("Error in `get_gamemode_update_timestamp's json body")
+            print(response.text)
+            return None
+
         data = response_result.get("data", [{}])[0]
         if "updated" in data:
             timestamp = data["updated"]
