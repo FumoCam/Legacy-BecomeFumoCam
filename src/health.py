@@ -191,6 +191,10 @@ async def get_current_server_id(attempt_num=1) -> str:
             print(f"Failed to un-ratelimit after 429 hit ({attempt_num} attempts, {backoff_time}s waited)")
             return "ERROR"
 
+    elif response.status_code == 503:
+        if "high load" in response.text:
+            # Roblox is getting ddossed or something
+            return "OVERLOAD_ERROR"
     print("Returning Error on base")
     print(response.status_code)
     try:
@@ -212,6 +216,14 @@ async def check_for_better_server():
     log_process("Checking for better server")
     current_server_id = await get_current_server_id()
     print(f"current_server_id1 {current_server_id}")
+    if current_server_id == "OVERLOAD_ERROR":
+        try:
+            if CFG.OVERLOAD is True:
+                return
+        except Exception:
+            CFG.OVERLOAD = True
+            notify_admin("Servers are overloaded, rejoins impacted")
+
     if current_server_id == "ERROR":
         for i in range(CFG.max_attempts_better_server):
             log_process(
