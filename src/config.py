@@ -83,7 +83,7 @@ SCREEN_RES = (
         "mss_monitor": mss().monitors[-1],
     }
 )
-BACKPACK_BUTTON_POSITION = (0.87, 0.89)
+BACKPACK_BUTTON_POSITION = (0.87, 0.93)
 BACKPACK_ITEM_POSITIONS = {
     1: {"x": 0.26, "y": 0.35},
     2: {"x": 0.41, "y": 0.35},
