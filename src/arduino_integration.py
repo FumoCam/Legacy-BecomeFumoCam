@@ -214,6 +214,7 @@ class ArduinoConfig:
         sleep(0.5)
 
     def moveMouseAbsolute(self, x: int, y: int):
+        print(f"[moveMouseAbsolute] x: '{x}' y: '{y}'")
         if CFG.mouse_software_emulation:
             return self.moveMouseAbsolute_software(x, y)
         payload = {
@@ -240,9 +241,13 @@ class ArduinoConfig:
         sleep(2)
 
     def scrollMouse(self, amount: int, down: bool = True):
-        payload = {"type": "scrollMouse", "down": down}
-        for scrolls in range(amount):
-            self.arduino_interface(payload, 4)  # Arbitrary max time for safety
+        import pyautogui
+        raw_amount = amount if not down else amount * -1
+        factor = 200 # Mimic windows/arduino/pydirectinput
+        pyautogui.scroll(clicks=raw_amount*factor) # 100
+        # payload = {"type": "scrollMouse", "down": down}
+        # for scrolls in range(amount):
+        #     self.arduino_interface(payload, 4)  # Arbitrary max time for safety
 
     def pitch(self, amount: float, up: bool, raw: bool = False):
         RATIO = 2080 / 180  # a full top/bottom flip is 180 * this

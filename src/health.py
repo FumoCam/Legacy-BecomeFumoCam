@@ -545,6 +545,7 @@ async def click_character_in_menu(click_random: bool = False):
     if click_random:
         button_y -= int(CFG.screen_res["height"] * CFG.respawn_character_select_offset)
     ACFG.moveMouseAbsolute(x=button_x, y=button_y)
+    ACFG.middle_click_software()
     ACFG.left_click()
     await async_sleep(0.5)
 
