@@ -348,8 +348,14 @@ def test_window_area():
 def test_move_mouse():
     async def do_test():
         await check_active()
-        target_x = 1040
-        target_y = 100
+        # Block Textfield
+        # target_x = int(SCREEN_RES["width"] * 0.5)
+        # target_y = int(SCREEN_RES["height"] * 0.32)
+        # ACFG.moveMouseAbsolute(x=target_x, y=target_y)
+        # ACFG.left_click()
+        # Close block window
+        target_x = int(SCREEN_RES["width"] * 0.35)
+        target_y = int(SCREEN_RES["height"] * 0.25)
         ACFG.moveMouseAbsolute(x=target_x, y=target_y)
         ACFG.left_click()
         # Main spawn calibration
@@ -417,6 +423,7 @@ def test_nav():
 
 if __name__ == "__main__":
     pyautogui.FAILSAFE = False
+    test_move_mouse()
     # If account banned
     # test_get_cookies_for_browser()
 
@@ -446,7 +453,7 @@ if __name__ == "__main__":
     # test_character_select()
     # test_character_select_full()
     # test_check_for_better_server()
-    test_bare_roblox_api()
+    # test_bare_roblox_api()
     # test_character_select_full(click_mouse=True)
     # test_force_respawn()
     # test_toggle_collisions()

@@ -322,6 +322,12 @@ class ArduinoConfig:
             self.arduino_interface(payload, len(message) * self.msg_letter_wait_time)
         sleep(0.75)
 
+    def type_message(self, message: str):
+        message = message.encode("ascii", "ignore").decode("ascii", "ignore")
+        payload = {"type": "typeword", "len": len(message), "msg": message}
+        self.arduino_interface(payload, len(message) * self.msg_letter_wait_time)
+        sleep(0.75)
+
     def use(self):
         payload = {"type": "keyhold", "key": "e", "hold_time": 1.75}
         self.arduino_interface(payload, payload["hold_time"])

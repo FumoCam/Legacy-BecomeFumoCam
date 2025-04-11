@@ -13,7 +13,7 @@ from selenium.webdriver.chrome.service import Service
 
 from actions import respawn_character, send_chat
 from commands import ACFG, CFG
-from config import OBS, ZOOM_FIRST_PERSON, ActionQueueItem
+from config import OBS, SCREEN_RES, ZOOM_FIRST_PERSON, ActionQueueItem
 from crash_check import check_if_still_online
 from navpoints import (  # TODO: Make this better/scalable
     comedy_spawn_calibration,
@@ -959,6 +959,68 @@ async def toggle_collisions() -> bool:
         if need_zoom_adjust:
             ACFG.zoom("i", CFG.zoom_out_ui_cv)
         return False
+    log("")
+    log_process("")
+    ACFG.resetMouse()
+    if need_zoom_adjust:
+        ACFG.zoom("i", CFG.zoom_out_ui_cv)
+    return True
+
+
+async def block_username(username: str) -> bool:
+    await check_active(force_fullscreen=False)
+
+    need_zoom_adjust = False
+    if CFG.zoom_level < CFG.zoom_ui_min_cv:
+        ACFG.zoom("o", CFG.zoom_out_ui_cv)
+        need_zoom_adjust = True
+
+    if not await click_settings_button(check_open_state=True):
+        notify_admin("Failed to open settings")
+        log("")
+        log_process("")
+        if need_zoom_adjust:
+            ACFG.zoom("i", CFG.zoom_out_ui_cv)
+        return False
+
+    # log(f"Finding {CFG.settings_menu_block_label} option")
+    # if not await ocr_for_settings(option=CFG.settings_menu_block_label):
+    #     # 2022-07-11 login-message hotfix
+    #     await close_login_message()
+    # if not await ocr_for_settings(option=CFG.settings_menu_block_label):
+    #     notify_admin("Failed to block user")
+    #     log("")
+    #     log_process("")
+    #     return False
+    #     if need_zoom_adjust:
+    #         ACFG.zoom("i", CFG.zoom_out_ui_cv)
+
+
+    # Click block button
+    target_x = int(SCREEN_RES["width"] * 0.35)
+    target_y = int(SCREEN_RES["height"] * 0.25)
+    ACFG.moveMouseAbsolute(x=target_x, y=target_y)
+    ACFG.left_click()
+
+    # Wait for animation
+    await async_sleep(0.5)
+
+    # Click Textfield in Block window
+    target_x = int(SCREEN_RES["width"] * 0.5)
+    target_y = int(SCREEN_RES["height"] * 0.32)
+    ACFG.moveMouseAbsolute(x=target_x, y=target_y)
+    ACFG.left_click()
+
+    # Type name and press enter
+    ACFG.type_message(username)
+
+    # Close block window
+    target_x = int(SCREEN_RES["width"] * 0.35)
+    target_y = int(SCREEN_RES["height"] * 0.25)
+    ACFG.moveMouseAbsolute(x=target_x, y=target_y)
+    ACFG.left_click()
+
+    # Finalize
     log("")
     log_process("")
     ACFG.resetMouse()

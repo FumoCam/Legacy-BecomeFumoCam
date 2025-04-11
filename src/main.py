@@ -25,6 +25,7 @@ from config import ActionQueueItem
 from health import (
     ACFG,
     auto_nav,
+    block_username,
     check_for_better_server,
     force_respawn_character,
     handle_join_new_server,
@@ -145,6 +146,12 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
                 await send_chat(message)
         elif action.name == "grief":
             await toggle_collisions()
+            ACFG.resetMouse()
+            log_process("")
+            log("")
+        elif action.name == "block":
+            name = action.values["name"]
+            await block_username(name)
             ACFG.resetMouse()
             log_process("")
             log("")

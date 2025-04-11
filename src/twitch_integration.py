@@ -575,6 +575,28 @@ class TwitchBot(commands.Bot):
         action = ActionQueueItem("chat", {"msgs": [f"[{msg}]"]})
         await CFG.add_action_queue(action)
 
+    @commands.command()  # Mutes someone ingame
+    async def block(self, ctx: commands.Context):
+        is_dev = await self.is_dev(ctx.message.author)
+        if not is_dev:
+            await ctx.send("[You do not have permission to block.]")
+            return
+
+        args = await self.get_args(ctx)
+        username = args[0]
+        if not username:
+            await ctx.send('[Please specify a username! (i.e. "!block SomeUser"]')
+            return
+
+        await self.do_discord_log(ctx.message)
+
+        action = ActionQueueItem("block", {"name": username})
+        await CFG.add_action_queue(action)
+
+        action = ActionQueueItem("chat", {"msgs": [f"/mute {username}"]})
+        await CFG.add_action_queue(action)
+
+
     @commands.command()
     async def move(self, ctx: commands.Context):
         move_time: float = 1
