@@ -59,11 +59,11 @@ void leap(StaticJsonDocument<MAX_PAYLOAD_LENGTH> payload)
     Keyboard.press(' ');
     while (micros() < jump_goal)
     {
-    }                      // Jump expires first
+    } // Jump expires first
     Keyboard.release(' '); // Release jump
     while (micros() < forward_goal)
     {
-    }                                // Forward lasts longer
+    } // Forward lasts longer
     Keyboard.release(direction_key); // Release forward
     if (diagonal_jump)
     {
@@ -87,7 +87,7 @@ void leap(StaticJsonDocument<MAX_PAYLOAD_LENGTH> payload)
       Keyboard.press(' ');
       while (micros() < forward_goal)
       {
-      }                                // Forward expires first
+      } // Forward expires first
       Keyboard.release(direction_key); // Release forward
       if (diagonal_jump)
       {
@@ -95,7 +95,7 @@ void leap(StaticJsonDocument<MAX_PAYLOAD_LENGTH> payload)
       }
       while (micros() < jump_goal)
       {
-      }                      // Jump lasts longer
+      } // Jump lasts longer
       Keyboard.release(' '); // Release jump
     }
     else
@@ -113,11 +113,11 @@ void leap(StaticJsonDocument<MAX_PAYLOAD_LENGTH> payload)
       Keyboard.press(' ');
       while (micros() < jump_goal)
       {
-      }                      // Jump expires first
+      } // Jump expires first
       Keyboard.release(' '); // Release jump
       while (micros() < forward_goal)
       {
-      }                                // Forward lasts longer
+      } // Forward lasts longer
       Keyboard.release(direction_key); // Release forward
       if (diagonal_jump)
       {
@@ -292,7 +292,7 @@ void chat(StaticJsonDocument<MAX_PAYLOAD_LENGTH> payload)
   for (int i = 0; i < msg_len; i++)
   {
     Keyboard.write(msg[i]);
-    delay(10);
+    delay(30);
   }
   delay(50);
   Keyboard.write(KEY_RETURN);
@@ -306,7 +306,7 @@ void typeword(StaticJsonDocument<MAX_PAYLOAD_LENGTH> payload)
   for (int i = 0; i < msg_len; i++)
   {
     Keyboard.write(msg[i]);
-    delay(10);
+    delay(30);
   }
   delay(50);
   Keyboard.write(KEY_RETURN);
@@ -319,7 +319,7 @@ void chat_ocr(StaticJsonDocument<MAX_PAYLOAD_LENGTH> payload)
   for (int i = 0; i < msg_len; i++)
   {
     Keyboard.write(msg[i]);
-    delay(10);
+    delay(30);
   }
   delay(75);
   Keyboard.write(KEY_RETURN);
