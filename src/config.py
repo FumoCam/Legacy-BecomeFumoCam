@@ -173,9 +173,10 @@ class MainBotConfig:
 
     chat_block_functions = ["anti_afk"]
     chat_dimensions = screen_res["mss_monitor"].copy()
-    chat_dimensions["top"] = int(screen_res["height"] * 0.08)
-    chat_dimensions["width"] = int(screen_res["width"] * 0.29)
-    chat_dimensions["height"] = int(screen_res["height"] * 0.21)
+    chat_dimensions["top"] = int(screen_res["height"] * 0.087)
+    chat_dimensions["left"] = int(screen_res["height"] * 0.015)
+    chat_dimensions["width"] = int(screen_res["width"] * 0.342)
+    chat_dimensions["height"] = int(screen_res["height"] * 0.252)
     chat_fuzzy_threshold = (
         0.80  # Minimum similarity ratio to consider a message as already-captured
     )

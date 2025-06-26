@@ -322,6 +322,13 @@ if __name__ == "__main__":
     async def test():
         await check_active(force_fullscreen=False)
         await async_sleep(2)
-        await do_chat_ocr()
+        ACFG.keyPress("/")
+        await async_sleep(2)
+
+        import mss.tools
+        screenshot = await take_screenshot_binary(CFG.chat_dimensions)
+        mss.tools.to_png(screenshot.rgb, screenshot.size, output="test.png")
+        # await do_chat_ocr()
+        ACFG.keyPress("KEY_ESC")
 
     asyncio.run(test())
