@@ -1,15 +1,20 @@
 import json
 from time import sleep, strftime
 from typing import Dict, List, Optional, cast
-from mss.screenshot import ScreenShot
-from mss import mss
-from mss.models import Monitor
-from mss import tools as mss_tools
+
+import cv2 as cv
 import numpy as np
 import pydirectinput
-from pygetwindow import getActiveWindow, getAllWindows, Win32Window
-import cv2 as cv
 from cv2.typing import MatLike
+from mss import mss
+from mss import tools as mss_tools
+from mss.models import Monitor
+from mss.screenshot import ScreenShot
+from pygetwindow import Win32Window, getActiveWindow, getAllWindows
+
+from arduino_integration import ACFG
+from config import CFG
+
 # Lot of redefined functions from utilities.py, this needs to be crosscompatible with the rust equivalent
 
 def log_crashcheck(msg: str):
@@ -170,6 +175,9 @@ def check_if_still_online() -> bool:
     """
 
     log_crashcheck(f"===CRASH CHECK START===\n================\n============")
+    if CFG.chat_ocr_active:
+        CFG.chat_ocr_ready = False
+
     roblox_window_active = make_roblox_active_window()
     if not roblox_window_active:
         log_crashcheck("[main] Failed to make roblox window active")
@@ -195,6 +203,10 @@ def check_if_still_online() -> bool:
     # Move the camera back
     move_camera(reverse=True)
     hide_mouse()
+
+    if CFG.chat_ocr_active:
+        CFG.chat_ocr_ready = True
+        ACFG.keyPress("/")
 
     # Do a binary edge comparison; Camera cannot move if disconnected so they should be similar if so
     needle_mask = cv.bitwise_not(after_edge) / 255
