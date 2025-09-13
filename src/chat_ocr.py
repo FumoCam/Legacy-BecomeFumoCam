@@ -299,7 +299,8 @@ async def do_logic_on_messages(messages):
         response = await chat_logic.logic_core(obj)
         if response is None:
             continue
-
+        else:
+            CFG.chat_last_ocr = time()
         response_messages.append(response)
 
         response_obj = obj

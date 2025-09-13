@@ -11,6 +11,7 @@ import navpoints
 from actions import mute_toggle, respawn_character
 from arduino_integration import ACFG, CFG
 from config import SCREEN_RES
+from crash_check import save_screenshot
 from health import (
     change_characters,
     check_character_menu,
@@ -26,7 +27,12 @@ from health import (
     toggle_collisions,
 )
 from twitch_integration import twitch_main
-from utilities import check_active, kill_process, take_screenshot_binary_blocking
+from utilities import (
+    check_active,
+    kill_process,
+    take_screenshot_binary,
+    take_screenshot_binary_blocking,
+)
 
 
 def test_turn_camera(direction="left", amount=45):
@@ -420,10 +426,22 @@ def test_nav():
 
     asyncio.get_event_loop().run_until_complete(do_test())
 
+def test_ai():
+
+
+    async def do_test():
+        await check_active()
+        await async_sleep(1)
+        screenshot = take_screenshot_binary_blocking(CFG.chat_dimensions)
+        save_screenshot(screenshot, "chat_ocr")
+
+    asyncio.get_event_loop().run_until_complete(do_test())
+
 
 if __name__ == "__main__":
     pyautogui.FAILSAFE = False
-    test_move_mouse()
+    # test_move_mouse()
+    test_ai()
     # If account banned
     # test_get_cookies_for_browser()
 

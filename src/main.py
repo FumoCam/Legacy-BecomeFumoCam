@@ -267,8 +267,8 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
                 await async_sleep(0.3)
                 await send_chat(message)
 
-            await async_sleep(0.1)
-            await send_chat("/clear")
+            # await async_sleep(0.1)
+            # await send_chat("/clear")
             await async_sleep(0.1)
             ACFG.keyPress("/")
 

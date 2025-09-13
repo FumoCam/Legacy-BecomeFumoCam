@@ -5,6 +5,7 @@ resources/selenium/browser_cookies.json
 resources/selenium/*.exe
 
 # Debug
+chat_ocr.jpg
 crashcheck_after_edge.jpg
 crashcheck_after.jpg
 crashcheck_before_edge.jpg

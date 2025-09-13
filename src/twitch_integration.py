@@ -6,6 +6,7 @@ from asyncio import sleep as async_sleep
 from datetime import datetime
 from enum import Enum
 from os import getenv, system
+from time import time
 from typing import Dict, Literal, Optional, Union
 
 import aiohttp
@@ -716,7 +717,7 @@ async def routine_anti_afk():
         await CFG.add_action_queue(ActionQueueItem("anti_afk"))
         CFG.anti_afk_runs += 1
         if CFG.anti_afk_runs % 3 == 0:
-            await CFG.add_action_queue(ActionQueueItem("chat", {"msgs": ["/clear"]}))
+            # await CFG.add_action_queue(ActionQueueItem("chat", {"msgs": ["/clear"]}))
             await CFG.add_action_queue(ActionQueueItem("advert"))
             print("[Subroutine] Queued Advert")
             CFG.anti_afk_runs = 0
@@ -759,7 +760,9 @@ async def routine_ocr():
         try:
             # HACK: psuedo-blocking, make non-async
             CFG.chat_ocr_ready = False
-            await do_chat_ocr()
+            # Delay since we can't clear chat
+            if time() >= CFG.chat_last_ocr + 15:
+                await do_chat_ocr()
         except Exception:
             CFG.chat_ocr_ready = True
             CFG.chat_cleared_after_response = True
