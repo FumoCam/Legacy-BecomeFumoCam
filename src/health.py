@@ -612,7 +612,7 @@ async def check_if_game_loaded() -> bool:
 
     if not game_loaded:
         log("Failed to load into game.")
-        notify_admin("Failed to load into game")
+        # notify_admin("Failed to load into game")
         await async_sleep(5)
         await CFG.add_action_queue(ActionQueueItem("handle_failed_to_join"))
         log("")
