@@ -769,7 +769,7 @@ async def routine_ocr():
             error_log(traceback.format_exc())
 
 
-@routines.routine(time=datetime(year=1970, month=1, day=1, hour=3, minute=58))
+@routines.routine(time=datetime(year=1970, month=1, day=1, hour=3, minute=57))
 async def routine_reboot():
     action_queue_item = ActionQueueItem(
         "chat", {"msgs": ["[System restart in 2 minutes]"]}
@@ -788,7 +788,7 @@ async def routine_reboot():
     action_queue_item = ActionQueueItem("chat", {"msgs": ["[System restarting]"]})
     await CFG.add_action_queue(action_queue_item)
     await async_sleep(10)
-    system("shutdown /f /r /t 0")  # nosec
+    system("shutdown /f /s /t 0")  # nosec
 
 
 @routines.routine(seconds=5, wait_first=True)
