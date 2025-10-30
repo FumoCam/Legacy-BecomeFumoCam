@@ -288,7 +288,7 @@ void chat(StaticJsonDocument<MAX_PAYLOAD_LENGTH> payload)
   const int msg_len = payload["len"];
   const char *msg = payload["msg"];
   Keyboard.write('/');
-  delay(50);
+  delay(200);
   for (int i = 0; i < msg_len; i++)
   {
     Keyboard.write(msg[i]);
