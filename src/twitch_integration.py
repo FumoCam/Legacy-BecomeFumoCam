@@ -813,7 +813,7 @@ def get_gamemode_update_timestamp() -> Union[None, str]:
     UNIVERSE_ID = 2291704236
     API_URL = "https://games.roblox.com/v1/games"
     try:
-        response = get(API_URL, params={"universeIds": [UNIVERSE_ID]}, timeout=10)
+        response = get(API_URL, params={"universeIds": [UNIVERSE_ID]}, headers={"Cookie":CFG.cookies_str}, timeout=10)
     except Exception:
         print("[Could not poll for game updates, servers may be down]")
         error_log(traceback.format_exc())

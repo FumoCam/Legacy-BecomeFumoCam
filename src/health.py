@@ -78,7 +78,7 @@ async def check_if_should_change_servers(
     log("Querying Roblox API for server list")
     url = f"https://games.roblox.com/v1/games/{CFG.game_id}/servers/Public"
     try:
-        response = get(url, timeout=10)
+        response = get(url, headers={"Cookie":CFG.cookies_str}, timeout=10)
     except Exception:
         return False, "[WARN] Could not poll Roblox servers. Is Roblox down?"
     if response.status_code == 200:
@@ -363,7 +363,7 @@ async def get_best_server(get_worst: bool = False) -> Dict:
     }
     best_server = server_obj
     url = f"https://games.roblox.com/v1/games/{CFG.game_id}/servers/Public"
-    response = get(url, timeout=10)
+    response = get(url, headers={"Cookie":CFG.cookies_str}, timeout=10)
     if response.status_code == 200:
         try:
             response_result = response.json()
@@ -372,7 +372,10 @@ async def get_best_server(get_worst: bool = False) -> Dict:
             return {}
 
         servers = response_result["data"]
+        print(servers)
+        []
         for server in servers:
+            {'id': '1c7c8360-09df-4eac-aafb-648919dcbbd4', 'maxPlayers': 100, 'playing': 14, 'playerTokens': [], 'players': [], 'fps': 59.934044, 'ping': 271}
             if "playerTokens" in server:
                 best_server_player_tokens = best_server.get("playerTokens", [])
                 assert isinstance(best_server_player_tokens, list)  # mypy fix
