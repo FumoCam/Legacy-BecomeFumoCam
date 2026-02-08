@@ -259,9 +259,9 @@ class MainBotConfig:
 
     max_attempts_better_server = 20
     max_attempts_character_selection = 30
-    max_attempts_game_loaded = 100
+    max_attempts_game_loaded = 200
     max_attempts_sit_button = 3
-    max_seconds_browser_launch = 20
+    max_seconds_browser_launch = 60
 
     mouse_software_emulation = True
     mouse_blocked_regions = [
