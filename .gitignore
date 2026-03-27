@@ -32,3 +32,5 @@ src/.env
 
 # pyenv
 .python-version
+src/test_screenshot.jpg
+src/chat_ocr_processed.jpg

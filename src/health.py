@@ -93,6 +93,7 @@ async def check_if_should_change_servers(
         if current_server_id == "N/A":
             current_server_id = ""
         for server in servers:
+            print(server)
             server_id = server.get("id", "undefined")
             if server.get("playing") is None:
                 server_playing = -1
@@ -634,11 +635,60 @@ async def close_login_message():
     ACFG.left_click()
 
 
+async def cv_game_loaded(notify_on_fail=False):
+    #HACK: Buggy mess that checks if backpack icon is visible.
+    #Hijacked other threshold code from somewhere. This can be done better.
+    #Use test_window_area for recalibration
+
+    await check_active(force_fullscreen=False)
+    sleep(1)
+
+    monitor = SCREEN_RES["mss_monitor"].copy()
+
+    left = int(0.85 * SCREEN_RES["width"])
+    width = int(0.025 * SCREEN_RES["width"])
+    down = int(0.85 * SCREEN_RES["height"])
+    height = int(0.09 * SCREEN_RES["height"])
+
+    monitor["left"] = left
+    monitor["width"] = width
+    monitor["top"] = down
+    monitor["height"] = height
+
+    screenshot = np.array(await take_screenshot_binary(monitor))
+    screenshot = cv.cvtColor(screenshot, cv.COLOR_RGBA2RGB)
+
+    color_threshold = cv.inRange(screenshot, (236, 235, 253), (255, 255, 255))
+    screenshot[color_threshold > 0] = (255, 255, 255)
+
+    white_pixels = np.sum(screenshot == 255)
+    non_white_pixels = np.sum(screenshot != 255)
+    total_pixels = white_pixels + non_white_pixels
+    percentage = round(white_pixels / total_pixels,5)
+    expected = 0.84424
+
+    is_loaded = percentage == expected
+    if notify_on_fail and not is_loaded:
+        notify_admin(f"Failure in `cv_game_loaded` (got '{percentage}', expected '{expected}')")
+
+    return (percentage == 0.84424)
+
 async def server_spawn() -> bool:
     game_loaded = await check_if_game_loaded()
     if not game_loaded:
         return False
 
+    max_s_to_wait_for_ui = 45
+    ui_loaded = False
+    for i in range(max_s_to_wait_for_ui-1):
+        ui_loaded = await cv_game_loaded()
+        if ui_loaded:
+            break
+        await async_sleep(1)
+    if not ui_loaded:
+        # Final attempt, notify
+        if not await cv_game_loaded(notify_on_fail=True):
+            return False
     await close_login_message()
 
     if CFG.disable_collisions_on_spawn:

@@ -5,6 +5,7 @@ from time import strftime, time
 import cv2 as cv
 import numpy as np
 import pytesseract
+from mss.screenshot import ScreenShot
 
 from ai.chat_logic import ChatLogic
 from config import CFG, ActionQueueItem
@@ -23,7 +24,7 @@ async def can_activate_ocr():
 
 async def activate_ocr():
     await check_active()
-    ACFG.keyPress("/")
+    ACFG.openChat()
     CFG.chat_ocr_active = True
     CFG.chat_ocr_ready = True
     print("OCR Activated")
@@ -43,38 +44,77 @@ async def deactivate_ocr():
         output_log("chat_ai_subtitle", "")
 
 
-async def do_chat_ocr(screenshot=None):
-    CFG.chat_start_ocr_time = time()
-    screenshot = await take_screenshot_binary(CFG.chat_dimensions)
+async def process_chat_binary_screenshot(screenshot: ScreenShot, debug=False):
     screenshot = np.array(screenshot)
 
     scale = 3
     screenshot = cv.resize(
         screenshot, None, fx=scale, fy=scale, interpolation=cv.INTER_CUBIC
     )
+    if debug:
+        cv.imshow("resized", screenshot)
+        cv.waitKey(0)
     colors_to_replace = [
         {"name": "purple", "low": (150, 78, 58), "high": (158, 183, 139)},
         {"name": "green", "low": (46, 206, 128), "high": (48, 255, 218)},
     ]
     screenshot_hsv = cv.cvtColor(screenshot, cv.COLOR_RGB2HSV)
+    if debug:
+        cv.imshow("screenshot_hsv", screenshot_hsv)
+        cv.waitKey(0)
     for color_obj in colors_to_replace:
         color_threshold = cv.inRange(
             screenshot_hsv, color_obj["low"], color_obj["high"]
         )
         screenshot_hsv[color_threshold > 0] = (0, 0, 255)
+        if debug:
+            cv.imshow(f"color_replace {color_obj['name']}", screenshot_hsv)
+            cv.waitKey(0)
+
+
 
     color_threshold = cv.inRange(screenshot_hsv, (0, 0, 145), (180, 255, 255))
     screenshot_hsv[color_threshold > 0] = (0, 0, 255)
+    if debug:
+        cv.imshow(f"thresh1", screenshot_hsv)
+        cv.waitKey(0)
     screenshot_hsv[color_threshold <= 0] = (0, 0, 0)
+    if debug:
+        cv.imshow(f"thresh2", screenshot_hsv)
+        cv.waitKey(0)
     screenshot = cv.cvtColor(screenshot_hsv, cv.COLOR_HSV2RGB)
+    if debug:
+        cv.imshow(f"hsv2rgb", screenshot)
+        cv.waitKey(0)
 
     img = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)  # PyTesseract
+    if debug:
+        cv.imshow(f"bgr2gray", screenshot)
+        cv.waitKey(0)
     _, img = cv.threshold(img, 150, 255, cv.THRESH_BINARY)
+    if debug:
+        cv.imshow(f"img after threshold could be blank", img)
+        cv.waitKey(0)
     img = cv.bitwise_not(img)
+    if debug:
+        cv.imshow(f"img bitwise not", img)
+        cv.waitKey(0)
+    return img
 
+async def ocr_on_img(processed_img: ScreenShot):
     ocr_data = pytesseract.image_to_data(
-        img, config="--oem 1 --psm 6", output_type=pytesseract.Output.DICT
+        processed_img, config="--oem 1 --psm 6", output_type=pytesseract.Output.DICT
     )
+    return ocr_data
+
+async def do_chat_ocr(screenshot=None):
+    CFG.chat_start_ocr_time = time()
+    screenshot = await take_screenshot_binary(CFG.chat_dimensions)
+
+    processed_img = await process_chat_binary_screenshot(screenshot)
+
+    ocr_data = await ocr_on_img(processed_img)
+
     await process_ocr_data(ocr_data)
 
 
@@ -168,7 +208,7 @@ async def process_ocr_data(ocr_data):
             )
 
         last_clear = False
-
+    print(messages)
     await log_processed_messages(messages)
 
 
@@ -293,6 +333,8 @@ def insert_interactions_to_db(messages):
 
 
 async def do_logic_on_messages(messages):
+    print("Hit ocr logic")
+    print(messages)
     response_messages = []
     response_message_objs = []
     for obj in messages:
@@ -323,7 +365,7 @@ if __name__ == "__main__":
     async def test():
         await check_active(force_fullscreen=False)
         await async_sleep(2)
-        ACFG.keyPress("/")
+        ACFG.openChat()
         await async_sleep(2)
 
         import mss.tools

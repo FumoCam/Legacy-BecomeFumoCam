@@ -286,6 +286,22 @@ class ArduinoConfig:
         payload = {"type": "keypress", "key": key}
         self.arduino_interface(payload, 1)
 
+    def openChat(self):
+        self.keyPress("/")
+        # Hope this doesnt break because of no arduino
+        sleep(0.75)
+        pydirectinput.keyDown("ctrl")
+        sleep(0.25)
+        pydirectinput.keyDown("a")
+        sleep(0.5)
+        pydirectinput.keyUp("ctrl")
+        pydirectinput.keyUp("a")
+        sleep(0.25)
+        pydirectinput.keyDown("backspace")
+        sleep(0.25)
+        pydirectinput.keyUp("backspace")
+
+
     def resetMouse(self, move_to_bottom_right: bool = True):
         if CFG.mouse_software_emulation:
             if move_to_bottom_right:

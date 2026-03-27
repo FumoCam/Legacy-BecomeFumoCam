@@ -206,7 +206,7 @@ def check_if_still_online() -> bool:
 
     if CFG.chat_ocr_active:
         CFG.chat_ocr_ready = True
-        ACFG.keyPress("/")
+        ACFG.openChat()
 
     # Do a binary edge comparison; Camera cannot move if disconnected so they should be similar if so
     needle_mask = cv.bitwise_not(after_edge) / 255

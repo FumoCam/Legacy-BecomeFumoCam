@@ -270,7 +270,7 @@ async def do_process_queue():  # TODO: Investigate benefits of multithreading ov
             # await async_sleep(0.1)
             # await send_chat("/clear")
             await async_sleep(0.1)
-            ACFG.keyPress("/")
+            ACFG.openChat()
 
             output_log("chat_ai_title", "[Chat AI]")
             output_log("chat_ai_subtitle", "Active")

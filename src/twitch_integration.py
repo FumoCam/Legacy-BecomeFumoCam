@@ -716,7 +716,7 @@ async def routine_anti_afk():
     try:
         await CFG.add_action_queue(ActionQueueItem("anti_afk"))
         CFG.anti_afk_runs += 1
-        if CFG.anti_afk_runs % 3 == 0:
+        if CFG.anti_afk_runs % 9 == 0:
             # await CFG.add_action_queue(ActionQueueItem("chat", {"msgs": ["/clear"]}))
             await CFG.add_action_queue(ActionQueueItem("advert"))
             print("[Subroutine] Queued Advert")

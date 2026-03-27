@@ -10,6 +10,7 @@ from requests import get
 import navpoints
 from actions import mute_toggle, respawn_character
 from arduino_integration import ACFG, CFG
+from chat_ocr import ocr_on_img, process_chat_binary_screenshot, process_ocr_data
 from config import SCREEN_RES
 from crash_check import save_screenshot
 from health import (
@@ -17,6 +18,7 @@ from health import (
     check_character_menu,
     check_for_better_server,
     check_if_game_loaded,
+    check_if_should_change_servers,
     click_character_in_menu,
     click_character_select_button,
     force_respawn_character,
@@ -315,20 +317,25 @@ def test_window_area():
         # monitor["height"] -= top_offset + bottom_offset
 
         # BACKPACK
-        # horizontal_offset = int(0.14 * SCREEN_RES["width"])
-        # monitor["left"] += horizontal_offset
-        # monitor["width"] -= horizontal_offset * 2
-        # vertical_offset = int(0.137 * SCREEN_RES["height"])
-        # monitor["top"] += vertical_offset
-        # monitor["height"] -= vertical_offset * 2
+        left = int(0.85 * SCREEN_RES["width"])
+        width = int(0.025 * SCREEN_RES["width"])
+
+        down = int(0.85 * SCREEN_RES["height"])
+        height = int(0.09 * SCREEN_RES["height"])
+
+
+        monitor["left"] = left
+        monitor["width"] = width
+        monitor["top"] = down
+        monitor["height"] = height
 
         # CHARACTER SELECT WHITESPACE
-        horizontal_offset = int(SCREEN_RES["center_x"]) - 5
-        monitor["left"] += horizontal_offset
-        monitor["width"] -= horizontal_offset * 2
-        vertical_offset = int(0.045 * SCREEN_RES["height"])
-        monitor["top"] += vertical_offset
-        monitor["height"] = vertical_offset + 2
+        # horizontal_offset = int(SCREEN_RES["center_x"]) - 5
+        # monitor["left"] += horizontal_offset
+        # monitor["width"] -= horizontal_offset * 2
+        # vertical_offset = int(0.045 * SCREEN_RES["height"])
+        # monitor["top"] += vertical_offset
+        # monitor["height"] = vertical_offset + 2
 
         print(monitor)
         screenshot = np.array(take_screenshot_binary_blocking(monitor))
@@ -341,8 +348,11 @@ def test_window_area():
         non_white_pixels = np.sum(screenshot != 255)
         total_pixels = white_pixels + non_white_pixels
         percentage = white_pixels / total_pixels
-        ui_loaded = percentage > 0.7
-        print(ui_loaded)
+
+        print(percentage)
+        print(white_pixels)
+        print(non_white_pixels)
+        print(round(percentage,5))
 
         cv.imshow("screen", screenshot)
         cv.imwrite("test_screenshot.jpg", screenshot)
@@ -434,14 +444,31 @@ def test_ai():
         await async_sleep(1)
         screenshot = take_screenshot_binary_blocking(CFG.chat_dimensions)
         save_screenshot(screenshot, "chat_ocr")
+        processed = await process_chat_binary_screenshot(screenshot, True)
+        save_screenshot(processed, "chat_ocr_processed")
+        ocr_data = await ocr_on_img(processed)
+        print(ocr_data)
+        await process_ocr_data(ocr_data)
+
 
     asyncio.get_event_loop().run_until_complete(do_test())
 
+def test_check_if_should_change_servers():
+    async def do_test():
+        result = await check_if_should_change_servers()
+        print("result:")
+        print(result)
+
+    asyncio.get_event_loop().run_until_complete(do_test())
 
 if __name__ == "__main__":
     pyautogui.FAILSAFE = False
     # test_move_mouse()
     test_ai()
+
+    # If need new player token
+    # test_check_if_should_change_servers()
+
     # If account banned
     # test_get_cookies_for_browser()
 
