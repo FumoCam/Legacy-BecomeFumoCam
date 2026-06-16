@@ -3,7 +3,7 @@ import json
 import traceback
 from asyncio import create_task
 from asyncio import sleep as async_sleep
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from os import getenv, system
 from time import time
@@ -768,8 +768,8 @@ async def routine_ocr():
             CFG.chat_cleared_after_response = True
             error_log(traceback.format_exc())
 
-
-@routines.routine(time=datetime(year=1970, month=1, day=1, hour=3, minute=57))
+# 9am/10am ET
+@routines.routine(time=datetime(year=1970, month=1, day=1, hour=13, minute=57, tzinfo=UTC))
 async def routine_reboot():
     action_queue_item = ActionQueueItem(
         "chat", {"msgs": ["[System restart in 2 minutes]"]}
