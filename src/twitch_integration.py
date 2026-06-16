@@ -769,7 +769,16 @@ async def routine_ocr():
             error_log(traceback.format_exc())
 
 # 9am/10am ET
-@routines.routine(time=datetime(year=1970, month=1, day=1, hour=13, minute=57, tzinfo=UTC))
+#TODO: routines doesnt support UTC directly
+
+utc_hour_goal = 13
+# -4/-5
+hours_to_add_for_utc = int(datetime.now().astimezone().utcoffset().total_seconds()/ 3600)
+# 9/10
+target_hr_in_utc = utc_hour_goal + hours_to_add_for_utc
+
+
+@routines.routine(time=datetime(year=1970, month=1, day=1, hour=target_hr_in_utc, minute=57))
 async def routine_reboot():
     action_queue_item = ActionQueueItem(
         "chat", {"msgs": ["[System restart in 2 minutes]"]}
