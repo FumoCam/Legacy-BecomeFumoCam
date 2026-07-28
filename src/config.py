@@ -131,7 +131,7 @@ class MainBotConfig:
 
     advertisement = [
         "You can control this bot live!",
-        "Click the purple icon in this bot's profile!",
+        "Ask around where you can find it! (Abiding by Roblox TOS)",
     ]
     # Birthday Advert
     epoch_time = 1616817600  # 2021-03-27 00:00:00
@@ -140,7 +140,7 @@ class MainBotConfig:
         print("Loading birthday advertisement")
         advertisement = [
             "It's this bot's birthday!",
-            "Click the purple icon in this bot's profile!",
+            "Ask around where you can find it! (Abiding by Roblox TOS)",
         ]
 
     backpack_button_position = BACKPACK_BUTTON_POSITION
